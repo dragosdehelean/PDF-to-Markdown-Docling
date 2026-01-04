@@ -5,8 +5,9 @@ import logging
 from pathlib import Path
 
 from docling.datamodel.document import ConversionStatus
-from docling.document_converter import DocumentConverter
 from docling_core.types.doc.base import ImageRefMode
+
+from conversion_utils import convert_pdf_to_markdown
 
 
 def parse_page_range(value: str) -> tuple[int, int]:
@@ -68,6 +69,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Page range to process, 1-based and inclusive (e.g., 1:10).",
     )
     parser.add_argument(
+        "--ocr",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Enable OCR for scanned PDFs (default: off for digital PDFs).",
+    )
+    parser.add_argument(
+        "--pdf-backend",
+        choices=("auto", "pypdfium2", "docling-parse-v4"),
+        default="auto",
+        help="PDF text backend to use (default: auto).",
+    )
+    parser.add_argument(
+        "--device",
+        default="cuda",
+        help="Accelerator device: auto, cpu, mps, cuda, or cuda:N (default: cuda).",
+    )
+    parser.add_argument(
         "--quiet",
         action="store_true",
         help="Reduce logging noise from Docling.",
@@ -104,27 +122,27 @@ def main() -> None:
         images_dir = output_path.parent / f"{output_path.stem}_assets"
         images_dir.mkdir(parents=True, exist_ok=True)
 
-    converter = DocumentConverter()
-    convert_kwargs: dict[str, object] = {}
-    if args.max_pages is not None:
-        convert_kwargs["max_num_pages"] = args.max_pages
-    if args.page_range is not None:
-        convert_kwargs["page_range"] = args.page_range
-
-    result = converter.convert(input_path, **convert_kwargs)
+    result, backend_name = convert_pdf_to_markdown(
+        input_path=input_path,
+        output_path=output_path,
+        image_mode=image_mode,
+        images_dir=images_dir,
+        max_pages=args.max_pages,
+        page_range=args.page_range,
+        do_ocr=args.ocr,
+        device=args.device,
+        pdf_backend=args.pdf_backend,
+        quiet=args.quiet,
+    )
     if result.status in {ConversionStatus.FAILURE, ConversionStatus.SKIPPED}:
         raise SystemExit(f"Conversion failed with status: {result.status}")
 
     if result.status is ConversionStatus.PARTIAL_SUCCESS:
         logging.warning("Conversion completed with partial success.")
 
-    result.document.save_as_markdown(
-        output_path,
-        artifacts_dir=images_dir,
-        image_mode=image_mode,
-    )
-
     print(f"Wrote Markdown to {output_path}")
+    if args.pdf_backend == "auto":
+        print(f"Used PDF backend: {backend_name}")
     if images_dir and image_mode is ImageRefMode.REFERENCED:
         print(f"Saved images to {images_dir}")
 
