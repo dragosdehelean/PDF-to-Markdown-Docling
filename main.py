@@ -38,6 +38,17 @@ def resolve_output_path(input_path: Path, output_arg: str | None) -> Path:
     return output_path
 
 
+def resolve_export_path(input_path: Path, export_arg: str) -> Path:
+    if export_arg.endswith(("/", "\\")):
+        return Path(export_arg) / f"{input_path.stem}.docling.json"
+
+    export_path = Path(export_arg)
+    if export_path.exists() and export_path.is_dir():
+        return export_path / f"{input_path.stem}.docling.json"
+
+    return export_path
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Convert a PDF financial report into Markdown using Docling."
@@ -75,6 +86,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable OCR for scanned PDFs (default: off for digital PDFs).",
     )
     parser.add_argument(
+        "--ocr-mode",
+        choices=("off", "on", "auto"),
+        default="off",
+        help="OCR mode: off, on, or auto (default: off).",
+    )
+    parser.add_argument(
+        "--ocr-engine",
+        choices=("auto", "tesseract", "rapidocr", "easyocr"),
+        default="tesseract",
+        help="OCR engine when OCR is enabled (default: tesseract).",
+    )
+    parser.add_argument(
+        "--ocr-lang",
+        default="eng",
+        help="OCR languages (e.g. 'eng' or 'ron+eng').",
+    )
+    parser.add_argument(
+        "--force-full-page-ocr",
+        action="store_true",
+        help="Force full-page OCR when OCR is enabled.",
+    )
+    parser.add_argument(
         "--pdf-backend",
         choices=("auto", "pypdfium2", "docling-parse-v4"),
         default="auto",
@@ -89,6 +122,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--quiet",
         action="store_true",
         help="Reduce logging noise from Docling.",
+    )
+    parser.add_argument(
+        "--audit",
+        action="store_true",
+        help="Run a PDF-to-Markdown audit after conversion.",
+    )
+    parser.add_argument(
+        "--export-json",
+        help="Save Docling JSON (lossless) to a file or directory.",
     )
     return parser
 
@@ -122,6 +164,10 @@ def main() -> None:
         images_dir = output_path.parent / f"{output_path.stem}_assets"
         images_dir.mkdir(parents=True, exist_ok=True)
 
+    ocr_mode = args.ocr_mode
+    if args.ocr:
+        ocr_mode = "on"
+
     result, backend_name = convert_pdf_to_markdown(
         input_path=input_path,
         output_path=output_path,
@@ -129,7 +175,10 @@ def main() -> None:
         images_dir=images_dir,
         max_pages=args.max_pages,
         page_range=args.page_range,
-        do_ocr=args.ocr,
+        ocr_mode=ocr_mode,
+        ocr_engine=args.ocr_engine,
+        ocr_lang=args.ocr_lang,
+        force_full_page_ocr=args.force_full_page_ocr,
         device=args.device,
         pdf_backend=args.pdf_backend,
         quiet=args.quiet,
@@ -143,6 +192,38 @@ def main() -> None:
     print(f"Wrote Markdown to {output_path}")
     if args.pdf_backend == "auto":
         print(f"Used PDF backend: {backend_name}")
+
+    if args.audit:
+        from audit_utils import (
+            audit_doc_vs_markdown,
+            audit_doc_vs_markdown_per_page,
+            format_audit,
+        )
+
+        markdown_text = output_path.read_text(encoding="utf-8")
+        metrics = audit_doc_vs_markdown(result.document, markdown_text)
+        print("Audit:", format_audit(metrics))
+
+        page_audits = audit_doc_vs_markdown_per_page(result.document, markdown_text)
+        page_audits.sort(key=lambda p: p.token_coverage)
+        worst = page_audits[:5]
+        if worst:
+            print("Worst pages by token coverage:")
+            for audit in worst:
+                print(
+                    f"  page {audit.page_no}: "
+                    f"token_coverage={audit.token_coverage:.2%}, "
+                    f"numeric_recall={audit.numeric_recall:.2%}, "
+                    f"date_recall={audit.date_recall:.2%}, "
+                    f"pdf_len={audit.pdf_text_length}, md_len={audit.md_text_length}"
+                )
+
+    if args.export_json:
+        from export_utils import save_docling_json
+
+        export_path = resolve_export_path(input_path, args.export_json).resolve()
+        save_docling_json(result.document, export_path)
+        print(f"Wrote Docling JSON to {export_path}")
     if images_dir and image_mode is ImageRefMode.REFERENCED:
         print(f"Saved images to {images_dir}")
 
