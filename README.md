@@ -35,6 +35,7 @@ Options
 - `--ocr-engine tesseract` to select the OCR engine
 - `--ocr-lang ron+eng` to set OCR languages (if installed)
 - `--force-full-page-ocr` to OCR the full page instead of detected regions
+- `--fix-spaced-tables` to repair spaced-out table text via hybrid OCR
 - `--pdf-backend auto` to auto-select the cleaner backend (default is auto)
 - `--device cuda` to run on GPU (use `auto` or `cpu` if CUDA is unavailable)
 - `--audit` to run a PDF↔MD fidelity audit

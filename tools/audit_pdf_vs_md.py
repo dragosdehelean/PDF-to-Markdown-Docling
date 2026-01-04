@@ -58,6 +58,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Force full-page OCR when OCR is enabled.",
     )
     parser.add_argument(
+        "--fix-spaced-tables",
+        action="store_true",
+        help="Hybrid fix for spaced-out table text using OCR just for tables.",
+    )
+    parser.add_argument(
         "--per-page",
         action="store_true",
         help="Print per-page audit summary.",
@@ -95,6 +100,7 @@ def main() -> None:
         ocr_engine=args.ocr_engine,
         ocr_lang=args.ocr_lang,
         force_full_page_ocr=args.force_full_page_ocr,
+        fix_spaced_tables=args.fix_spaced_tables,
         device=args.device,
         pdf_backend=args.pdf_backend,
         quiet=True,

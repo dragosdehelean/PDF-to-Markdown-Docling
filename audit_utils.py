@@ -27,6 +27,8 @@ class AuditMetrics:
     heading_count_md: int
     pdf_text_length: int
     md_text_length: int
+    spaced_table_cells: int
+    total_table_cells: int
 
 
 @dataclass(frozen=True)
@@ -37,6 +39,31 @@ class PageAudit:
     date_recall: float
     pdf_text_length: int
     md_text_length: int
+
+
+_SPACED_TEXT_PATTERN = re.compile(r"(?:\b[\wĂÂÎȘȚăâîșț]\b\s+){4,}")
+_SPACED_DIGIT_PATTERN = re.compile(r"(?:\b\d\b\s+){3,}\b\d\b")
+_SPLIT_WORD_PATTERN = re.compile(r"\b\w{2,}\s+\w\s+\w{2,}\b", flags=re.UNICODE)
+_SPACED_NUMBER_PATTERN = re.compile(r"\d\s+[.,/]?\s*\d")
+
+
+def is_spaced_text(text: str) -> bool:
+    if len(text) < 6:
+        return False
+    if _SPACED_TEXT_PATTERN.search(text):
+        return True
+    if _SPACED_DIGIT_PATTERN.search(text):
+        return True
+    if _SPLIT_WORD_PATTERN.search(text):
+        return True
+    if _SPACED_NUMBER_PATTERN.search(text):
+        return True
+
+    tokens = [tok for tok in text.split() if tok]
+    if len(tokens) < 6:
+        return False
+    single_tokens = [tok for tok in tokens if len(tok) == 1]
+    return (len(single_tokens) / len(tokens)) >= 0.6
 
 
 def _normalize_token(token: str) -> str:
@@ -131,6 +158,15 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
     heading_count_pdf = _docling_heading_count(doc)
     heading_count_md = _markdown_heading_count(markdown)
 
+    spaced_cells = 0
+    total_cells = 0
+    for item, _level in doc.iterate_items():
+        if isinstance(item, TableItem):
+            for cell in item.data.table_cells:
+                total_cells += 1
+                if is_spaced_text(cell.text):
+                    spaced_cells += 1
+
     return AuditMetrics(
         token_coverage=_coverage(pdf_tokens, md_tokens),
         numeric_recall=_coverage(numbers_pdf, numbers_md),
@@ -142,6 +178,8 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
         heading_count_md=heading_count_md,
         pdf_text_length=len(pdf_text),
         md_text_length=len(markdown),
+        spaced_table_cells=spaced_cells,
+        total_table_cells=total_cells,
     )
 
 
@@ -197,5 +235,6 @@ def format_audit(metrics: AuditMetrics) -> str:
         f"tables_pdf={metrics.table_count_pdf}, tables_md={metrics.table_count_md}, "
         f"table_cells_pdf={metrics.table_cells_pdf}, "
         f"headings_pdf={metrics.heading_count_pdf}, headings_md={metrics.heading_count_md}, "
-        f"pdf_text_len={metrics.pdf_text_length}, md_text_len={metrics.md_text_length}"
+        f"pdf_text_len={metrics.pdf_text_length}, md_text_len={metrics.md_text_length}, "
+        f"spaced_cells={metrics.spaced_table_cells}/{metrics.total_table_cells}"
     )

@@ -24,6 +24,8 @@ from docling_core.types.doc.base import ImageRefMode
 from docling_core.types.doc.document import ContentLayer, DEFAULT_EXPORT_LABELS
 from docling_core.types.doc.labels import DocItemLabel
 
+from audit_utils import audit_doc_vs_markdown
+from table_fixes import merge_spaced_table_cells
 from quality import QualityReport, format_report, score_markdown
 
 
@@ -33,6 +35,7 @@ BACKEND_MAP = {
 }
 
 PAGE_BREAK_PLACEHOLDER = "<!-- page break -->"
+SPACED_CELL_RATIO_THRESHOLD = 0.04
 
 
 def parse_ocr_langs(lang: str) -> list[str]:
@@ -60,6 +63,7 @@ def build_pdf_pipeline_options(
     ocr_engine: str,
     ocr_lang: str,
     force_full_page_ocr: bool,
+    do_cell_matching: bool,
 ) -> ThreadedPdfPipelineOptions:
     ocr_options = (
         build_ocr_options(
@@ -74,7 +78,7 @@ def build_pdf_pipeline_options(
         do_table_structure=True,
         table_structure_options=TableStructureOptions(
             mode=TableFormerMode.ACCURATE,
-            do_cell_matching=False,
+            do_cell_matching=do_cell_matching,
         ),
         do_ocr=do_ocr,
         accelerator_options=AcceleratorOptions(device=device),
@@ -159,6 +163,7 @@ def convert_pdf_to_markdown(
     ocr_engine: str,
     ocr_lang: str,
     force_full_page_ocr: bool,
+    fix_spaced_tables: bool,
     device: str,
     pdf_backend: str,
     quiet: bool,
@@ -172,6 +177,7 @@ def convert_pdf_to_markdown(
         ocr_engine=ocr_engine,
         ocr_lang=ocr_lang,
         force_full_page_ocr=force_full_page_ocr,
+        fix_spaced_tables=fix_spaced_tables,
         device=device,
         pdf_backend=pdf_backend,
         quiet=quiet,
@@ -201,6 +207,7 @@ def convert_pdf_to_doc(
     ocr_engine: str,
     ocr_lang: str,
     force_full_page_ocr: bool,
+    fix_spaced_tables: bool,
     device: str,
     pdf_backend: str,
     quiet: bool,
@@ -208,7 +215,12 @@ def convert_pdf_to_doc(
     export_labels = build_export_labels()
     ocr_mode = ocr_mode.lower()
 
-    def run_conversion(do_ocr: bool, force_full: bool) -> tuple[ConversionResult, str]:
+    def run_conversion(
+        do_ocr: bool,
+        force_full: bool,
+        do_cell_matching: bool,
+        backend_override: str | None = None,
+    ) -> tuple[ConversionResult, str]:
         pipeline_options = build_pdf_pipeline_options(
             image_mode=image_mode,
             do_ocr=do_ocr,
@@ -216,9 +228,13 @@ def convert_pdf_to_doc(
             ocr_engine=ocr_engine,
             ocr_lang=ocr_lang,
             force_full_page_ocr=force_full,
+            do_cell_matching=do_cell_matching,
         )
 
-        if pdf_backend == "auto":
+        if backend_override is not None:
+            backend_name = backend_override
+            backend_cls = BACKEND_MAP[backend_override]
+        elif pdf_backend == "auto":
             backend_name, backend_cls, _reports = select_backend_auto(
                 input_path=input_path,
                 pipeline_options=pipeline_options,
@@ -248,23 +264,59 @@ def convert_pdf_to_doc(
         return result, backend_name
 
     if ocr_mode == "on":
-        result, backend_name = run_conversion(True, force_full_page_ocr)
-        return result, backend_name, export_labels
-
-    if ocr_mode == "off":
-        result, backend_name = run_conversion(False, False)
-        return result, backend_name, export_labels
-
-    # auto: run without OCR, retry with OCR only if text is sparse
-    result, backend_name = run_conversion(False, False)
+        result, backend_name = run_conversion(True, force_full_page_ocr, True)
+    elif ocr_mode == "off":
+        result, backend_name = run_conversion(False, False, False)
+    else:
+        # auto: run without OCR, retry with OCR only if text is sparse
+        result, backend_name = run_conversion(False, False, False)
     text = result.document.export_to_text()
     page_count = max(len(result.document.pages), 1)
     chars_per_page = len(text) / page_count
-    if chars_per_page >= 200:
-        return result, backend_name, export_labels
+    metrics = audit_doc_vs_markdown(result.document, "")
+    spaced_ratio = (
+        metrics.spaced_table_cells / metrics.total_table_cells
+        if metrics.total_table_cells
+        else 0.0
+    )
 
-    ocr_result, ocr_backend = run_conversion(True, True)
-    ocr_text = ocr_result.document.export_to_text()
-    if len(ocr_text) > len(text) * 1.2:
-        return ocr_result, ocr_backend, export_labels
+    if ocr_mode == "auto":
+        if chars_per_page < 200 or spaced_ratio >= SPACED_CELL_RATIO_THRESHOLD:
+            ocr_result, ocr_backend = run_conversion(
+                True, True, True, backend_override=backend_name
+            )
+            ocr_text = ocr_result.document.export_to_text()
+            ocr_metrics = audit_doc_vs_markdown(ocr_result.document, "")
+            ocr_spaced_ratio = (
+                ocr_metrics.spaced_table_cells / ocr_metrics.total_table_cells
+                if ocr_metrics.total_table_cells
+                else 0.0
+            )
+
+            if ocr_spaced_ratio < spaced_ratio * 0.5:
+                result = ocr_result
+                backend_name = ocr_backend
+                metrics = ocr_metrics
+                spaced_ratio = ocr_spaced_ratio
+                text = ocr_text
+                chars_per_page = len(text) / page_count
+            elif len(ocr_text) > len(text) * 1.2:
+                result = ocr_result
+                backend_name = ocr_backend
+                metrics = ocr_metrics
+                spaced_ratio = ocr_spaced_ratio
+
+    if fix_spaced_tables and metrics.total_table_cells:
+        if spaced_ratio >= SPACED_CELL_RATIO_THRESHOLD:
+            ocr_table_doc, _backend = run_conversion(
+                True, True, True, backend_override=backend_name
+            )
+            replaced, total_spaced = merge_spaced_table_cells(
+                result.document, ocr_table_doc.document
+            )
+            if not quiet:
+                print(
+                    f"Hybrid table fix: replaced {replaced}/{total_spaced} spaced cells."
+                )
+
     return result, backend_name, export_labels
