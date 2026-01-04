@@ -1,0 +1,9 @@
+[project]
+name = "pdf-to-markdown-docling"
+version = "0.1.0"
+description = "Convert financial PDF reports to Markdown for RAG"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "docling>=2.66.0",
+]
