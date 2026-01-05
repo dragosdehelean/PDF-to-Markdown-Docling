@@ -25,7 +25,12 @@ from docling_core.types.doc.document import ContentLayer, DEFAULT_EXPORT_LABELS
 from docling_core.types.doc.labels import DocItemLabel
 from docling_core.types.doc import TableItem
 
-from audit_utils import audit_doc_vs_markdown, is_spaced_text, needs_spacing_fix
+from audit_utils import (
+    audit_doc_vs_markdown,
+    is_spaced_text,
+    needs_spacing_fix,
+    needs_table_spacing_fix,
+)
 from pymupdf_spacing_fix import fix_spaced_items_with_pymupdf_glyphs
 from spacing_fix import fix_spaced_items_with_word_cells
 from table_fixes import merge_spaced_table_cells
@@ -309,7 +314,7 @@ def convert_pdf_to_doc(
                 metrics = ocr_metrics
                 spaced_ratio = ocr_spaced_ratio
 
-    def detect_spacing_pages(doc, predicate) -> set[int] | None:
+    def detect_spacing_pages(doc, predicate, table_predicate=None) -> set[int] | None:
         pages: set[int] = set()
         has_unknown_page = False
         for item, _level in doc.iterate_items():
@@ -318,7 +323,8 @@ def convert_pdf_to_doc(
                 if page_no is None:
                     has_unknown_page = True
                 for cell in item.data.table_cells:
-                    if predicate(cell.text):
+                    cell_predicate = table_predicate or predicate
+                    if cell_predicate(cell.text):
                         if page_no is not None:
                             pages.add(page_no)
                         break
@@ -352,7 +358,9 @@ def convert_pdf_to_doc(
                 )
 
     if spacing_fix in {"pymupdf", "docling", "ocr"}:
-        pages_to_fix = detect_spacing_pages(result.document, needs_spacing_fix)
+        pages_to_fix = detect_spacing_pages(
+            result.document, needs_spacing_fix, table_predicate=needs_table_spacing_fix
+        )
         if spacing_fix == "docling":
             report = fix_spaced_items_with_word_cells(
                 result.document, input_path, pages_to_fix=pages_to_fix

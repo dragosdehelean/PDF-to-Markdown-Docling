@@ -11,7 +11,7 @@ import fitz
 from docling_core.types.doc import TableItem
 from docling_core.types.doc.base import BoundingBox, CoordOrigin
 
-from audit_utils import needs_spacing_fix, is_spaced_text
+from audit_utils import needs_spacing_fix, needs_table_spacing_fix, is_spaced_text
 
 
 TEXT_FLAGS = fitz.TEXT_PRESERVE_LIGATURES | fitz.TEXT_PRESERVE_WHITESPACE
@@ -224,7 +224,7 @@ def _compact_numeric_spacing(text: str) -> str:
     return text.strip()
 
 
-def _should_replace_text(old: str, new: str) -> bool:
+def _should_replace_text(old: str, new: str, *, table_mode: bool = False) -> bool:
     if not new or new == old:
         return False
     if len(new) < max(8, int(len(old) * 0.4)):
@@ -233,9 +233,15 @@ def _should_replace_text(old: str, new: str) -> bool:
     old_tokens = re.findall(r"\w+", old, flags=re.UNICODE)
     new_tokens = re.findall(r"\w+", new, flags=re.UNICODE)
     if old_tokens and len(new_tokens) < max(1, int(len(old_tokens) * 0.6)):
-        if not (is_spaced_text(old) or _NUMERIC_ONLY.fullmatch(old)):
+        if not (
+            is_spaced_text(old)
+            or _NUMERIC_ONLY.fullmatch(old)
+            or (table_mode and needs_table_spacing_fix(old))
+        ):
             return False
     if needs_spacing_fix(old) and not needs_spacing_fix(new):
+        return True
+    if table_mode and needs_table_spacing_fix(old) and not needs_table_spacing_fix(new):
         return True
     return _spacing_badness(new) + 0.5 < _spacing_badness(old)
 
@@ -271,7 +277,7 @@ def fix_spaced_items_with_pymupdf_glyphs(
                 if page is None:
                     continue
                 for cell in item.data.table_cells:
-                    if cell.bbox is None or not needs_spacing_fix(cell.text):
+                    if cell.bbox is None or not needs_table_spacing_fix(cell.text):
                         continue
                     bbox = _bbox_to_top_left(cell.bbox, page.rect.height)
                     clip = _clip_rect(page, bbox, pad)
@@ -282,7 +288,7 @@ def fix_spaced_items_with_pymupdf_glyphs(
                         _reconstruct_from_words(words)
                     )
                     if reconstructed and not needs_spacing_fix(reconstructed):
-                        if _should_replace_text(cell.text, reconstructed):
+                        if _should_replace_text(cell.text, reconstructed, table_mode=True):
                             cell.text = reconstructed
                             table_replaced += 1
                         continue
@@ -295,7 +301,9 @@ def fix_spaced_items_with_pymupdf_glyphs(
                             space_width_ratio=space_width_ratio,
                         )
                     )
-                    if reconstructed and _should_replace_text(cell.text, reconstructed):
+                    if reconstructed and _should_replace_text(
+                        cell.text, reconstructed, table_mode=True
+                    ):
                         cell.text = reconstructed
                         table_replaced += 1
             else:

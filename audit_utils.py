@@ -52,6 +52,15 @@ _RUNON_MERGED_ALNUM_PATTERN = re.compile(
     r"(?:[^\W\d_]{6,}\d{2,}[^\W\d_]{2,}|\d{2,}[^\W\d_]{6,})",
     flags=re.UNICODE,
 )
+_LETTER_CHARS = r"A-Za-zĂÂÎȘȚăâîșț"
+_SHORT_ALPHA_SEQ_PATTERN = re.compile(
+    rf"(?:\b[{_LETTER_CHARS}]{{1,2}}\b\s+){{2,}}\b[{_LETTER_CHARS}]{{1,2}}\b",
+    flags=re.UNICODE,
+)
+_TRAILING_SINGLE_ALPHA_PATTERN = re.compile(
+    rf"\b[{_LETTER_CHARS}]{{2,}}\s+[{_LETTER_CHARS}]{{1}}\b",
+    flags=re.UNICODE,
+)
 
 
 def is_spaced_text(text: str) -> bool:
@@ -97,6 +106,22 @@ def is_collapsed_text(text: str) -> bool:
 
 def needs_spacing_fix(text: str) -> bool:
     return is_spaced_text(text) or is_collapsed_text(text)
+
+
+def needs_table_spacing_fix(text: str) -> bool:
+    if needs_spacing_fix(text):
+        return True
+    if not text:
+        return False
+    has_digit = any(ch.isdigit() for ch in text)
+    has_letter = any(ch.isalpha() for ch in text)
+    if has_digit and not has_letter:
+        return False
+    if _SHORT_ALPHA_SEQ_PATTERN.search(text):
+        return True
+    if _TRAILING_SINGLE_ALPHA_PATTERN.search(text):
+        return True
+    return False
 
 def _normalize_token(token: str) -> str:
     return token.casefold().strip("_")
