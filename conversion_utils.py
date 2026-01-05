@@ -23,8 +23,11 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling_core.types.doc.base import ImageRefMode
 from docling_core.types.doc.document import ContentLayer, DEFAULT_EXPORT_LABELS
 from docling_core.types.doc.labels import DocItemLabel
+from docling_core.types.doc import TableItem
 
-from audit_utils import audit_doc_vs_markdown
+from audit_utils import audit_doc_vs_markdown, is_spaced_text, needs_spacing_fix
+from pymupdf_spacing_fix import fix_spaced_items_with_pymupdf_glyphs
+from spacing_fix import fix_spaced_items_with_word_cells
 from table_fixes import merge_spaced_table_cells
 from quality import QualityReport, format_report, score_markdown
 
@@ -163,7 +166,7 @@ def convert_pdf_to_markdown(
     ocr_engine: str,
     ocr_lang: str,
     force_full_page_ocr: bool,
-    fix_spaced_tables: bool,
+    spacing_fix: str,
     device: str,
     pdf_backend: str,
     quiet: bool,
@@ -177,7 +180,7 @@ def convert_pdf_to_markdown(
         ocr_engine=ocr_engine,
         ocr_lang=ocr_lang,
         force_full_page_ocr=force_full_page_ocr,
-        fix_spaced_tables=fix_spaced_tables,
+        spacing_fix=spacing_fix,
         device=device,
         pdf_backend=pdf_backend,
         quiet=quiet,
@@ -207,7 +210,7 @@ def convert_pdf_to_doc(
     ocr_engine: str,
     ocr_lang: str,
     force_full_page_ocr: bool,
-    fix_spaced_tables: bool,
+    spacing_fix: str,
     device: str,
     pdf_backend: str,
     quiet: bool,
@@ -306,7 +309,36 @@ def convert_pdf_to_doc(
                 metrics = ocr_metrics
                 spaced_ratio = ocr_spaced_ratio
 
-    if fix_spaced_tables and metrics.total_table_cells:
+    def detect_spacing_pages(doc, predicate) -> set[int] | None:
+        pages: set[int] = set()
+        has_unknown_page = False
+        for item, _level in doc.iterate_items():
+            if isinstance(item, TableItem):
+                page_no = item.prov[0].page_no if item.prov else None
+                if page_no is None:
+                    has_unknown_page = True
+                for cell in item.data.table_cells:
+                    if predicate(cell.text):
+                        if page_no is not None:
+                            pages.add(page_no)
+                        break
+            else:
+                text = getattr(item, "text", None)
+                if not text or not predicate(text):
+                    continue
+                page_no = item.prov[0].page_no if getattr(item, "prov", None) else None
+                if page_no is None:
+                    has_unknown_page = True
+                else:
+                    pages.add(page_no)
+        if has_unknown_page:
+            return None
+        return pages
+
+    spacing_fix = spacing_fix.lower()
+    if spacing_fix == "heuristic":
+        spacing_fix = "pymupdf"
+    if spacing_fix == "ocr" and metrics.total_table_cells:
         if spaced_ratio >= SPACED_CELL_RATIO_THRESHOLD:
             ocr_table_doc, _backend = run_conversion(
                 True, True, True, backend_override=backend_name
@@ -317,6 +349,39 @@ def convert_pdf_to_doc(
             if not quiet:
                 print(
                     f"Hybrid table fix: replaced {replaced}/{total_spaced} spaced cells."
+                )
+
+    if spacing_fix in {"pymupdf", "docling", "ocr"}:
+        pages_to_fix = detect_spacing_pages(result.document, needs_spacing_fix)
+        if spacing_fix == "docling":
+            report = fix_spaced_items_with_word_cells(
+                result.document, input_path, pages_to_fix=pages_to_fix
+            )
+            if not quiet and (report.table_cells or report.text_items):
+                page_info = (
+                    "all-pages"
+                    if pages_to_fix is None
+                    else f"{report.pages_processed} pages"
+                )
+                print(
+                    "Docling spacing fix (word/char cells): "
+                    f"table_cells={report.table_cells}, "
+                    f"text_items={report.text_items}, {page_info}"
+                )
+        else:
+            report = fix_spaced_items_with_pymupdf_glyphs(
+                result.document, input_path, pages_to_fix=pages_to_fix
+            )
+            if not quiet and (report.table_cells or report.text_items):
+                page_info = (
+                    "all-pages"
+                    if pages_to_fix is None
+                    else f"{report.pages_processed} pages"
+                )
+                print(
+                    "PyMuPDF spacing fix (glyph reconstruction): "
+                    f"table_cells={report.table_cells}, "
+                    f"text_items={report.text_items}, {page_info}"
                 )
 
     return result, backend_name, export_labels

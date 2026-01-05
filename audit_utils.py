@@ -29,6 +29,8 @@ class AuditMetrics:
     md_text_length: int
     spaced_table_cells: int
     total_table_cells: int
+    spaced_text_items: int
+    total_text_items: int
 
 
 @dataclass(frozen=True)
@@ -41,30 +43,60 @@ class PageAudit:
     md_text_length: int
 
 
-_SPACED_TEXT_PATTERN = re.compile(r"(?:\b[\wĂÂÎȘȚăâîșț]\b\s+){4,}")
+_SPACED_TEXT_PATTERN = re.compile(r"(?:\b\w\b\s+){1,}\b\w\b", flags=re.UNICODE)
 _SPACED_DIGIT_PATTERN = re.compile(r"(?:\b\d\b\s+){3,}\b\d\b")
 _SPLIT_WORD_PATTERN = re.compile(r"\b\w{2,}\s+\w\s+\w{2,}\b", flags=re.UNICODE)
 _SPACED_NUMBER_PATTERN = re.compile(r"\d\s+[.,/]?\s*\d")
+_RUNON_LETTERS_PATTERN = re.compile(r"(?:[^\W\d_]{20,})", flags=re.UNICODE)
+_RUNON_MERGED_ALNUM_PATTERN = re.compile(
+    r"(?:[^\W\d_]{6,}\d{2,}[^\W\d_]{2,}|\d{2,}[^\W\d_]{6,})",
+    flags=re.UNICODE,
+)
 
 
 def is_spaced_text(text: str) -> bool:
-    if len(text) < 6:
-        return False
-    if _SPACED_TEXT_PATTERN.search(text):
-        return True
     if _SPACED_DIGIT_PATTERN.search(text):
-        return True
-    if _SPLIT_WORD_PATTERN.search(text):
         return True
     if _SPACED_NUMBER_PATTERN.search(text):
         return True
+    if _SPACED_TEXT_PATTERN.search(text):
+        return True
+    if len(text) < 6:
+        return False
+    if _SPLIT_WORD_PATTERN.search(text):
+        return True
 
     tokens = [tok for tok in text.split() if tok]
-    if len(tokens) < 6:
+    if len(tokens) < 4:
         return False
     single_tokens = [tok for tok in tokens if len(tok) == 1]
-    return (len(single_tokens) / len(tokens)) >= 0.6
+    return (len(single_tokens) / len(tokens)) >= 0.5
 
+def is_collapsed_text(text: str) -> bool:
+    if _RUNON_LETTERS_PATTERN.search(text):
+        return True
+    if _RUNON_MERGED_ALNUM_PATTERN.search(text):
+        return True
+    if len(text) < 60:
+        return False
+    tokens = [tok for tok in re.findall(r"\w+", text, flags=re.UNICODE) if tok]
+    if len(tokens) < 8:
+        return False
+    avg_len = sum(len(tok) for tok in tokens) / len(tokens)
+    long_tokens = sum(1 for tok in tokens if len(tok) >= 18)
+    space_ratio = text.count(" ") / max(len(text), 1)
+
+    if avg_len >= 9.0:
+        return True
+    if long_tokens >= 2:
+        return True
+    if len(text) > 120 and space_ratio < 0.05:
+        return True
+    return False
+
+
+def needs_spacing_fix(text: str) -> bool:
+    return is_spaced_text(text) or is_collapsed_text(text)
 
 def _normalize_token(token: str) -> str:
     return token.casefold().strip("_")
@@ -160,12 +192,21 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
 
     spaced_cells = 0
     total_cells = 0
+    spaced_text_items = 0
+    total_text_items = 0
     for item, _level in doc.iterate_items():
         if isinstance(item, TableItem):
             for cell in item.data.table_cells:
                 total_cells += 1
                 if is_spaced_text(cell.text):
                     spaced_cells += 1
+        else:
+            text = getattr(item, "text", None)
+            if not text:
+                continue
+            total_text_items += 1
+            if needs_spacing_fix(text):
+                spaced_text_items += 1
 
     return AuditMetrics(
         token_coverage=_coverage(pdf_tokens, md_tokens),
@@ -180,6 +221,8 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
         md_text_length=len(markdown),
         spaced_table_cells=spaced_cells,
         total_table_cells=total_cells,
+        spaced_text_items=spaced_text_items,
+        total_text_items=total_text_items,
     )
 
 
@@ -236,5 +279,6 @@ def format_audit(metrics: AuditMetrics) -> str:
         f"table_cells_pdf={metrics.table_cells_pdf}, "
         f"headings_pdf={metrics.heading_count_pdf}, headings_md={metrics.heading_count_md}, "
         f"pdf_text_len={metrics.pdf_text_length}, md_text_len={metrics.md_text_length}, "
-        f"spaced_cells={metrics.spaced_table_cells}/{metrics.total_table_cells}"
+        f"spaced_cells={metrics.spaced_table_cells}/{metrics.total_table_cells}, "
+        f"spacing_issue_text_items={metrics.spaced_text_items}/{metrics.total_text_items}"
     )

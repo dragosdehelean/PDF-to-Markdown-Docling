@@ -110,7 +110,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fix-spaced-tables",
         action="store_true",
-        help="Hybrid fix for spaced-out table text using OCR just for tables.",
+        help="Deprecated: use --spacing-fix ocr instead.",
+    )
+    parser.add_argument(
+        "--spacing-fix",
+        choices=("off", "pymupdf", "docling", "heuristic", "ocr"),
+        default="pymupdf",
+        help=(
+            "Fix spacing issues. 'pymupdf' uses OCR-free glyph reconstruction. "
+            "'docling' uses Docling word/char cells. 'ocr' uses OCR for tables then "
+            "glyph reconstruction. 'heuristic' is an alias for 'pymupdf'."
+        ),
     )
     parser.add_argument(
         "--pdf-backend",
@@ -173,6 +183,12 @@ def main() -> None:
     if args.ocr:
         ocr_mode = "on"
 
+    spacing_fix = args.spacing_fix
+    if spacing_fix == "heuristic":
+        spacing_fix = "pymupdf"
+    if spacing_fix == "off" and args.fix_spaced_tables:
+        spacing_fix = "ocr"
+
     result, backend_name = convert_pdf_to_markdown(
         input_path=input_path,
         output_path=output_path,
@@ -184,7 +200,7 @@ def main() -> None:
         ocr_engine=args.ocr_engine,
         ocr_lang=args.ocr_lang,
         force_full_page_ocr=args.force_full_page_ocr,
-        fix_spaced_tables=args.fix_spaced_tables,
+        spacing_fix=spacing_fix,
         device=args.device,
         pdf_backend=args.pdf_backend,
         quiet=args.quiet,

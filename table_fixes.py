@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import Iterable
-import re
 
 from docling_core.types.doc import TableItem
 
@@ -65,41 +64,6 @@ def _collect_cells_by_page(items: Iterable[TableItem]) -> dict[int, list[tuple[o
                 continue
             pages[page_no].append((cell.bbox, cell.text))
     return pages
-
-
-_SPACED_WORD_SEQUENCE = re.compile(r"(?:\b\w\b\s+){3,}\b\w\b", flags=re.UNICODE)
-_SPACED_DIGIT_SEQUENCE = re.compile(r"(?:\b\d\b\s+){2,}\b\d\b")
-_SPACED_SHORT_SEQUENCE = re.compile(r"(?:\b\w\b\s+){1,}\b\w\b", flags=re.UNICODE)
-_SHORT_WORDS = ("CU", "IN", "LA", "PE", "DE", "SI", "OR", "SA", "AU", "DIN", "NR", "PR")
-_SHORT_WORD_PATTERN = re.compile(
-    r"([A-ZĂÂÎȘȚ]{3,})(" + "|".join(_SHORT_WORDS) + r")(?=\s)"
-)
-
-
-def _despace_text(text: str) -> str:
-    def joiner(match: re.Match) -> str:
-        return match.group(0).replace(" ", "")
-
-    if "  " in text:
-        chunks = [chunk for chunk in re.split(r"\s{2,}", text) if chunk.strip()]
-        if chunks:
-            text = " ".join("".join(chunk.split()) for chunk in chunks)
-
-    text = _SPACED_WORD_SEQUENCE.sub(joiner, text)
-    text = _SPACED_DIGIT_SEQUENCE.sub(joiner, text)
-    if text.upper() == text:
-        text = _SPACED_SHORT_SEQUENCE.sub(joiner, text)
-    for _ in range(5):
-        updated = re.sub(r"\b(\w{2,})\s+(\w)\s+(\w{2,})\b", r"\1\2\3", text)
-        if updated == text:
-            break
-        text = updated
-    text = re.sub(r"(?<=\d)\s+(?=[\d.,/%])", "", text)
-    text = re.sub(r"(?<=[\d.,/%])\s+(?=\d)", "", text)
-    text = re.sub(r"(?<=\b[A-Za-z])\s*/\s*(?=[A-Za-z]\b)", "/", text)
-    text = _SHORT_WORD_PATTERN.sub(r"\1 \2", text)
-    text = re.sub(r"\s{2,}", " ", text).strip()
-    return text
 
 
 def merge_spaced_table_cells(
@@ -199,15 +163,5 @@ def merge_spaced_table_cells(
                 if best_text:
                     cell.text = best_text
                     replaced += 1
-
-    # Final fallback: clean up any remaining spaced-out cells.
-    for base_table in base_tables:
-        for cell in base_table.data.table_cells:
-            if not is_spaced_text(cell.text):
-                continue
-            fixed = _despace_text(cell.text)
-            if fixed and fixed != cell.text and not is_spaced_text(fixed):
-                cell.text = fixed
-                replaced += 1
 
     return replaced, total_spaced
