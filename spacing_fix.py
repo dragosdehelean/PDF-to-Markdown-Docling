@@ -1,3 +1,5 @@
+"""@fileoverview OCR-free spacing repair using Docling word/char cells."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -226,6 +228,7 @@ def fix_spaced_items_with_word_cells(
     line_ratio: float = 0.6,
     space_width_ratio: float = 0.6,
 ) -> SpacingFixReport:
+    """Repair spaced-out text using Docling word/char cells within item bounds."""
     if pages_to_fix is not None and not pages_to_fix:
         return SpacingFixReport(0, 0, 0)
 

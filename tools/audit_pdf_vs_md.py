@@ -1,3 +1,5 @@
+"""@fileoverview CLI tool to audit PDF-to-Markdown extraction fidelity."""
+
 from __future__ import annotations
 
 import argparse
@@ -13,6 +15,7 @@ from docling_core.types.doc.base import ImageRefMode
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Construct the audit CLI argument parser."""
     parser = argparse.ArgumentParser(
         description="Audit PDF vs Markdown conversion fidelity."
     )
@@ -87,6 +90,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Run the audit workflow against a PDF and its Markdown output."""
     args = build_parser().parse_args()
     pdf_path = Path(args.pdf).expanduser().resolve()
     md_path = Path(args.md).expanduser().resolve()

@@ -1,3 +1,5 @@
+"""@fileoverview OCR-based table repair utilities."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -69,6 +71,7 @@ def _collect_cells_by_page(items: Iterable[TableItem]) -> dict[int, list[tuple[o
 def merge_spaced_table_cells(
     base_doc, ocr_doc, *, ratio_only: bool = False
 ) -> tuple[int, int]:
+    """Replace spaced table cells with OCR counterparts when available."""
     base_tables = [item for item, _ in base_doc.iterate_items() if isinstance(item, TableItem)]
     ocr_tables = [item for item, _ in ocr_doc.iterate_items() if isinstance(item, TableItem)]
 
@@ -123,7 +126,7 @@ def merge_spaced_table_cells(
                     cell.text = ocr_text
                     replaced += 1
 
-    # Fallback: spatial matching across OCR tables on the same page.
+    # WHY: Some OCR tables cannot be matched by shape; use spatial overlap as fallback.
     ocr_cells_by_page = _collect_cells_by_page(ocr_tables)
     for page_no, base_page_tables in base_by_page.items():
         ocr_cells = ocr_cells_by_page.get(page_no, [])

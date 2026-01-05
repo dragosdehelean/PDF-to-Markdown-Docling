@@ -1,3 +1,5 @@
+"""@fileoverview Conversion pipeline orchestration for PDF-to-Markdown."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -47,6 +49,7 @@ SPACED_CELL_RATIO_THRESHOLD = 0.04
 
 
 def parse_ocr_langs(lang: str) -> list[str]:
+    """Normalize OCR language list from CLI-friendly formats (e.g., ron+eng)."""
     raw = lang.replace("+", ",")
     return [piece.strip() for piece in raw.split(",") if piece.strip()]
 
@@ -54,6 +57,7 @@ def parse_ocr_langs(lang: str) -> list[str]:
 def build_ocr_options(
     engine: str, lang: str, force_full_page_ocr: bool
 ) -> object:
+    """Select the OCR engine configuration based on CLI options."""
     langs = parse_ocr_langs(lang)
     if engine == "tesseract":
         return TesseractCliOcrOptions(lang=langs, force_full_page_ocr=force_full_page_ocr)
@@ -73,6 +77,7 @@ def build_pdf_pipeline_options(
     force_full_page_ocr: bool,
     do_cell_matching: bool,
 ) -> ThreadedPdfPipelineOptions:
+    """Construct Docling pipeline options tuned for financial reports."""
     ocr_options = (
         build_ocr_options(
             engine=ocr_engine,
@@ -100,6 +105,7 @@ def build_pdf_pipeline_options(
 
 
 def build_export_labels() -> set[DocItemLabel]:
+    """Decide which Docling labels are exported to Markdown."""
     labels = set(DEFAULT_EXPORT_LABELS)
     labels.discard(DocItemLabel.DOCUMENT_INDEX)
     labels.discard(DocItemLabel.PAGE_HEADER)
@@ -141,6 +147,7 @@ def select_backend_auto(
     *,
     quiet: bool,
 ) -> tuple[str, Type, dict[str, QualityReport]]:
+    """Pick the cleaner PDF backend by probing a single page."""
     reports: dict[str, QualityReport] = {}
     for name, backend in BACKEND_MAP.items():
         reports[name] = _probe_backend(
@@ -176,6 +183,7 @@ def convert_pdf_to_markdown(
     pdf_backend: str,
     quiet: bool,
 ) -> tuple[ConversionResult, str]:
+    """Convert a PDF into Markdown with optional spacing repair and audit hooks."""
     result, backend_name, export_labels = convert_pdf_to_doc(
         input_path=input_path,
         image_mode=image_mode,
@@ -220,6 +228,7 @@ def convert_pdf_to_doc(
     pdf_backend: str,
     quiet: bool,
 ) -> tuple[ConversionResult, str, set[DocItemLabel]]:
+    """Convert a PDF into a Docling document with optional repair steps."""
     export_labels = build_export_labels()
     ocr_mode = ocr_mode.lower()
 
@@ -323,6 +332,7 @@ def convert_pdf_to_doc(
                 if page_no is None:
                     has_unknown_page = True
                 for cell in item.data.table_cells:
+                    # WHY: Table headers often split letters, so we allow a stricter predicate.
                     cell_predicate = table_predicate or predicate
                     if cell_predicate(cell.text):
                         if page_no is not None:

@@ -1,3 +1,5 @@
+"""@fileoverview CLI entrypoint for PDF-to-Markdown conversions."""
+
 from __future__ import annotations
 
 import argparse
@@ -11,6 +13,7 @@ from conversion_utils import convert_pdf_to_markdown
 
 
 def parse_page_range(value: str) -> tuple[int, int]:
+    """Parse a 1-based page range string (e.g., 1:10)."""
     try:
         start_str, end_str = value.split(":")
         start = int(start_str)
@@ -25,6 +28,7 @@ def parse_page_range(value: str) -> tuple[int, int]:
 
 
 def resolve_output_path(input_path: Path, output_arg: str | None) -> Path:
+    """Resolve the Markdown output path from CLI flags."""
     if output_arg is None:
         return input_path.with_suffix(".md")
 
@@ -39,6 +43,7 @@ def resolve_output_path(input_path: Path, output_arg: str | None) -> Path:
 
 
 def resolve_export_path(input_path: Path, export_arg: str) -> Path:
+    """Resolve the Docling JSON output path from CLI flags."""
     if export_arg.endswith(("/", "\\")):
         return Path(export_arg) / f"{input_path.stem}.docling.json"
 
@@ -50,6 +55,7 @@ def resolve_export_path(input_path: Path, export_arg: str) -> Path:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Construct the CLI argument parser."""
     parser = argparse.ArgumentParser(
         description="Convert a PDF financial report into Markdown using Docling."
     )
@@ -151,6 +157,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Run the CLI conversion pipeline."""
     args = build_parser().parse_args()
 
     log_level = logging.WARNING if args.quiet else logging.INFO
@@ -176,6 +183,7 @@ def main() -> None:
     image_mode = image_mode_map[args.image_mode]
 
     if image_mode is ImageRefMode.REFERENCED and images_dir is None:
+        # WHY: Default to a sibling assets folder to keep Markdown paths stable.
         images_dir = output_path.parent / f"{output_path.stem}_assets"
         images_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,3 +1,5 @@
+"""@fileoverview Spacing repair using PyMuPDF glyph positions (OCR-free)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -42,6 +44,7 @@ def _gap_threshold(
     median_char_width: float,
     fallback_ratio: float,
 ) -> float:
+    # WHY: Clustering gaps separates intra-word kerning from actual word breaks.
     if len(gaps) < 2:
         return median_char_width * fallback_ratio
 
@@ -256,6 +259,7 @@ def fix_spaced_items_with_pymupdf_glyphs(
     line_ratio: float = 0.6,
     space_width_ratio: float = 0.6,
 ) -> SpacingFixReport:
+    """Repair spaced table/text items using PyMuPDF glyph reconstruction."""
     if pages_to_fix is not None and not pages_to_fix:
         return SpacingFixReport(0, 0, 0)
 

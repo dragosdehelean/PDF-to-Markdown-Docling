@@ -1,3 +1,5 @@
+"""@fileoverview Lightweight heuristics to score Markdown extraction quality."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -13,6 +15,7 @@ class QualityReport:
 
 
 def score_markdown(text: str) -> QualityReport:
+    """Score Markdown quality using noise and repetition heuristics."""
     lines = [line.strip() for line in text.splitlines()]
 
     def is_noise_line(line: str) -> bool:
@@ -51,6 +54,7 @@ def score_markdown(text: str) -> QualityReport:
 
 
 def format_report(report: QualityReport) -> str:
+    """Format the quality report for CLI output."""
     return (
         "score="
         f"{report.score} short_lines={report.short_line_count} "

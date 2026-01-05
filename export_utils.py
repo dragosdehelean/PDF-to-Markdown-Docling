@@ -1,3 +1,5 @@
+"""@fileoverview Helpers for exporting Docling artifacts to disk."""
+
 from __future__ import annotations
 
 import json
@@ -7,6 +9,7 @@ from docling_core.types.doc.document import DoclingDocument
 
 
 def save_docling_json(doc: DoclingDocument, output_path: Path) -> None:
+    """Persist the Docling document as JSON for lossless inspection."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     data = doc.export_to_dict()
     output_path.write_text(

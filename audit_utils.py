@@ -1,3 +1,5 @@
+"""@fileoverview Audit helpers for PDF-vs-Markdown fidelity and spacing issues."""
+
 from __future__ import annotations
 
 import re
@@ -64,6 +66,7 @@ _TRAILING_SINGLE_ALPHA_PATTERN = re.compile(
 
 
 def is_spaced_text(text: str) -> bool:
+    """Detect obvious spacing artifacts (split letters or digits) in extracted text."""
     if _SPACED_DIGIT_PATTERN.search(text):
         return True
     if _SPACED_NUMBER_PATTERN.search(text):
@@ -82,6 +85,7 @@ def is_spaced_text(text: str) -> bool:
     return (len(single_tokens) / len(tokens)) >= 0.5
 
 def is_collapsed_text(text: str) -> bool:
+    """Detect run-on text where spaces are likely missing between words."""
     if _RUNON_LETTERS_PATTERN.search(text):
         return True
     if _RUNON_MERGED_ALNUM_PATTERN.search(text):
@@ -105,10 +109,12 @@ def is_collapsed_text(text: str) -> bool:
 
 
 def needs_spacing_fix(text: str) -> bool:
+    """Decide if generic text should be routed through spacing repair."""
     return is_spaced_text(text) or is_collapsed_text(text)
 
 
 def needs_table_spacing_fix(text: str) -> bool:
+    """Decide if table cells need spacing repair (captures short letter splits)."""
     if needs_spacing_fix(text):
         return True
     if not text:
@@ -199,6 +205,7 @@ def _docling_heading_count(doc: DoclingDocument) -> int:
 
 
 def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
+    """Compare Docling text against Markdown to quantify extraction fidelity."""
     pdf_text = doc.export_to_text()
     pdf_tokens = _tokenize(pdf_text)
     md_tokens = set(_tokenize(markdown))
@@ -254,6 +261,7 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
 def split_markdown_pages(
     markdown: str, page_break_placeholder: str = "<!-- page break -->"
 ) -> list[str]:
+    """Split Markdown into page-sized chunks using Docling page markers."""
     if page_break_placeholder not in markdown:
         return [markdown]
     parts = markdown.split(page_break_placeholder)
@@ -265,6 +273,7 @@ def audit_doc_vs_markdown_per_page(
     markdown: str,
     page_break_placeholder: str = "<!-- page break -->",
 ) -> list[PageAudit]:
+    """Compute per-page audit stats to localize low-fidelity regions."""
     pages = sorted(doc.pages.keys())
     md_pages = split_markdown_pages(markdown, page_break_placeholder=page_break_placeholder)
 
@@ -296,6 +305,7 @@ def audit_doc_vs_markdown_per_page(
 
 
 def format_audit(metrics: AuditMetrics) -> str:
+    """Render audit metrics in a compact, CLI-friendly string."""
     return (
         f"token_coverage={metrics.token_coverage:.2%}, "
         f"numeric_recall={metrics.numeric_recall:.2%}, "
