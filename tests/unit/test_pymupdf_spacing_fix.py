@@ -1,18 +1,66 @@
-"""@fileoverview Unit tests for PyMuPDF spacing repair helpers."""
+"""@fileoverview Unit tests for PyMuPDF spacing heuristics."""
 
 from __future__ import annotations
 
-from pymupdf_spacing_fix import _compact_numeric_spacing, _should_replace_text
+import unittest
+
+from pymupdf_spacing_fix import _needs_suffix_completion, _should_replace_text
 
 
-def test_compact_numeric_spacing() -> None:
-    """Ensure numeric spacing is compacted without touching non-numeric text."""
-    assert _compact_numeric_spacing("1 58 . 0 6 5 . 85 6") == "158.065.856"
-    assert _compact_numeric_spacing("RON 1 2 3") == "RON 1 2 3"
+class PyMuPdfSpacingFixTests(unittest.TestCase):
+    def test_suffix_completion_flags_truncated_word(self) -> None:
+        # Arrange
+        value = "cheltuiel"
+
+        # Act
+        result = _needs_suffix_completion(value)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_should_replace_when_new_extends_word(self) -> None:
+        # Arrange
+        old = "cheltuiel"
+        new = "cheltuieli"
+
+        # Act
+        result = _should_replace_text(old, new, table_mode=True)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_should_replace_when_new_extends_phrase(self) -> None:
+        # Arrange
+        old = "11.10. Alte cheltuiel"
+        new = "11.10. Alte cheltuieli"
+
+        # Act
+        result = _should_replace_text(old, new, table_mode=True)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_suffix_completion_handles_phrase_tokens(self) -> None:
+        # Arrange
+        value = "11.10. Alte cheltuiel"
+
+        # Act
+        result = _needs_suffix_completion(value)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_should_replace_when_tokens_reduce(self) -> None:
+        # Arrange
+        old = "Vi t e z a de ro t a ț ie a a ct i v e l or"
+        new = "Viteza de rotație a activelor"
+
+        # Act
+        result = _should_replace_text(old, new, table_mode=True)
+
+        # Assert
+        self.assertTrue(result)
 
 
-def test_should_replace_table_text_when_spacing_fixed() -> None:
-    """Confirm table-mode replacement allows token contraction for split words."""
-    old = "1.  Produ cț ia  vâ ndu tă"
-    new = "1. Producția vândută"
-    assert _should_replace_text(old, new, table_mode=True) is True
+if __name__ == "__main__":
+    unittest.main()

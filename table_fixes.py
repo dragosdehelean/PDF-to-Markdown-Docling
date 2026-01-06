@@ -1,13 +1,142 @@
-"""@fileoverview OCR-based table repair utilities."""
+"""@fileoverview Table repair utilities (OCR-based and structural fixes)."""
 
 from __future__ import annotations
 
 from collections import defaultdict
+import re
 from typing import Iterable
 
 from docling_core.types.doc import TableItem
+from docling_core.types.doc.base import BoundingBox
+from docling_core.types.doc.document import TableCell
 
 from audit_utils import is_spaced_text
+from text_normalize import normalize_ligatures, normalize_mojibake_text
+
+_DATE_PATTERN = re.compile(r"\d{1,2}[./-]\d{1,2}[./-]\d{2,4}")
+_DATE_FUZZY_PATTERN = re.compile(r"\d{1,3}[./-]\d{1,2}[./-]\d{2,4}")
+_DATE_SEP_PATTERN = re.compile(r"[./-]")
+_DUP_PERCENT_PATTERN = re.compile(r"\b(\d+(?:[.,]\d+)?)\s*%\s+\1\s*%")
+_SPACED_PERCENT_PATTERN = re.compile(r"\b(\d+(?:[.,]\d+)?)\s*%")
+_DUP_GROUP_PATTERN = re.compile(r"\b(\d{1,3})\s+\1((?:\.\d{3}){1,})\b")
+_LEADING_GROUP_PATTERN = re.compile(r"\b(\d{1,2})\s+(\d{3}(?:\.\d{3}){1,})\b")
+_DELTA_PERCENT_PATTERN = re.compile(r"^(?:ƒ\^\+%|∆\s*%|Δ\s*%)$")
+_CURRENCY_PREFIX_DUP_PATTERN = re.compile(
+    r"^(\d{1,3}(?:[.,]\d{1,3})?[.,]?)\s+(RON|EUR)\s+(\d{1,3}(?:\.\d{3}){1,})$"
+)
+_CURRENCY_SUFFIX_PATTERN = re.compile(
+    r"^(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)\s+(RON|EUR)$"
+)
+_CURRENCY_MISSING_R_PATTERN = re.compile(
+    r"^(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)\s+ON$"
+)
+_CURRENCY_REPEAT_PREFIX_PATTERN = re.compile(
+    r"^(RON|EUR)\s+(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)\s+\1\s+\2$"
+)
+_CURRENCY_REPEAT_SUFFIX_PATTERN = re.compile(
+    r"^(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)\s+(RON|EUR)\s+\1\s+\2$"
+)
+_CURRENCY_EXTRA_PREFIX_PATTERN = re.compile(
+    r"^(\d{1,3})\s+(RON|EUR)\s+(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)\s+\2$"
+)
+_CURRENCY_ON_MIDDLE_PATTERN = re.compile(
+    r"^(\d{1,3}(?:[.,]\d+)?)\s+ON\s+(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)\s+(RON|EUR)$"
+)
+_NEGATIVE_SPACE_PATTERN = re.compile(r"(?<!\w)-\s+(?=\d)")
+
+
+def _is_numericish(text: str) -> bool:
+    return bool(re.fullmatch(r"[0-9\s.,()%+A-Z-]+", text.upper()))
+
+
+def _digits_only(value: str) -> str:
+    return re.sub(r"\D", "", value)
+
+
+def _strip_trailing_currency_fragment(text: str) -> str:
+    tokens = text.split()
+    if len(tokens) < 3:
+        return text
+    if tokens[-1] not in {"R", "E", "N", "ON"}:
+        return text
+    if tokens[-1] == "ON":
+        if "RON" not in tokens:
+            return text
+        if not _digits_only(tokens[-2]):
+            return text
+        return " ".join(tokens[:-1])
+    if "RON" not in tokens and "EUR" not in tokens:
+        return text
+    if not _digits_only(tokens[-2]):
+        return text
+    return " ".join(tokens[:-1])
+
+
+def _strip_currency_prefix_dup(text: str) -> str:
+    match = _CURRENCY_PREFIX_DUP_PATTERN.match(text)
+    if not match:
+        return text
+    prefix = _digits_only(match.group(1))
+    value = _digits_only(match.group(3))
+    if prefix and value.startswith(prefix):
+        return f"{match.group(2)} {match.group(3)}"
+    return text
+
+
+def _strip_duplicate_currency_suffix(text: str) -> str:
+    tokens = text.split()
+    if len(tokens) < 3:
+        return text
+    if tokens[0] not in {"RON", "EUR"}:
+        return text
+    if tokens[-1] != tokens[0]:
+        return text
+    if not any(ch.isdigit() for ch in tokens[1]):
+        return text
+    return " ".join(tokens[:-1])
+
+
+def _compact_number_spacing(text: str) -> str:
+    if not _is_numericish(text):
+        return text
+    compacted = re.sub(r"(?<=\d)\s+(?=\d)", "", text)
+    compacted = re.sub(r"(?<=\d)\s+(?=[.,])", "", compacted)
+    compacted = re.sub(r"(?<=[.,])\s+(?=\d)", "", compacted)
+    compacted = re.sub(r"\s{2,}", " ", compacted)
+    return compacted.strip()
+
+
+def _normalize_currency_suffix(text: str) -> str:
+    match = _CURRENCY_SUFFIX_PATTERN.match(text)
+    if not match:
+        return text
+    return f"{match.group(2)} {match.group(1)}"
+
+
+def _fix_missing_currency_letter(text: str) -> str:
+    match = _CURRENCY_MISSING_R_PATTERN.match(text)
+    if not match:
+        return text
+    return f"RON {match.group(1)}"
+
+
+def _dedupe_repeated_currency_value(text: str) -> str:
+    match = _CURRENCY_REPEAT_PREFIX_PATTERN.match(text)
+    if match:
+        return f"{match.group(1)} {match.group(2)}"
+    match = _CURRENCY_REPEAT_SUFFIX_PATTERN.match(text)
+    if match:
+        return f"{match.group(2)} {match.group(1)}"
+    match = _CURRENCY_EXTRA_PREFIX_PATTERN.match(text)
+    if match:
+        return f"{match.group(2)} {match.group(3)}"
+    match = _CURRENCY_ON_MIDDLE_PATTERN.match(text)
+    if match:
+        prefix_digits = _digits_only(match.group(1))
+        value_digits = _digits_only(match.group(2))
+        if prefix_digits and value_digits.startswith(prefix_digits):
+            return f"{match.group(3)} {match.group(2)}"
+    return text
 
 
 def _table_page_no(table: TableItem) -> int | None:
@@ -66,6 +195,268 @@ def _collect_cells_by_page(items: Iterable[TableItem]) -> dict[int, list[tuple[o
                 continue
             pages[page_no].append((cell.bbox, cell.text))
     return pages
+
+
+def _header_column_groups(table: TableItem) -> list[tuple[int, int]] | None:
+    header_cells = [
+        cell for cell in table.data.table_cells if cell.start_row_offset_idx == 0
+    ]
+    if not header_cells:
+        return None
+
+    header_cells.sort(key=lambda cell: cell.start_col_offset_idx)
+    groups: list[tuple[int, int]] = []
+    expected_col = 0
+
+    for cell in header_cells:
+        if cell.start_col_offset_idx != expected_col:
+            return None
+        if cell.end_col_offset_idx <= cell.start_col_offset_idx:
+            return None
+        groups.append((cell.start_col_offset_idx, cell.end_col_offset_idx))
+        expected_col = cell.end_col_offset_idx
+
+    if expected_col != table.data.num_cols:
+        return None
+    if all(end - start == 1 for start, end in groups):
+        return None
+    return groups
+
+
+def _merge_bboxes(bboxes: list[BoundingBox]) -> BoundingBox | None:
+    if not bboxes:
+        return None
+    l = min(bbox.l for bbox in bboxes)
+    r = max(bbox.r for bbox in bboxes)
+    t = min(bbox.t for bbox in bboxes)
+    b = max(bbox.b for bbox in bboxes)
+    return BoundingBox(l=l, t=t, r=r, b=b, coord_origin=bboxes[0].coord_origin)
+
+
+def collapse_table_header_groups(table: TableItem) -> bool:
+    """Collapse column groups defined by header spans (e.g., currency + value pairs)."""
+    groups = _header_column_groups(table)
+    if groups is None:
+        return False
+
+    col_map: list[int] = [0] * table.data.num_cols
+    for new_idx, (start, end) in enumerate(groups):
+        for col_idx in range(start, end):
+            col_map[col_idx] = new_idx
+
+    merged_cells: dict[tuple[int, int, int, int], list[tuple[TableCell, int]]] = {}
+    for cell in table.data.table_cells:
+        new_start = col_map[cell.start_col_offset_idx]
+        new_end = col_map[cell.end_col_offset_idx - 1] + 1
+        key = (
+            cell.start_row_offset_idx,
+            cell.end_row_offset_idx,
+            new_start,
+            new_end,
+        )
+        merged_cells.setdefault(key, []).append((cell, cell.start_col_offset_idx))
+
+    updated_cells: list[TableCell] = []
+    for (row_start, row_end, col_start, col_end), cells in merged_cells.items():
+        cells.sort(key=lambda pair: pair[1])
+        texts = [cell.text.strip() for cell, _ in cells if cell.text and cell.text.strip()]
+        merged_text = " ".join(texts).strip()
+
+        merged_bbox = _merge_bboxes([cell.bbox for cell, _ in cells if cell.bbox])
+        column_header = any(cell.column_header for cell, _ in cells)
+        row_header = any(cell.row_header for cell, _ in cells)
+        row_section = any(cell.row_section for cell, _ in cells)
+        fillable = any(cell.fillable for cell, _ in cells)
+
+        updated_cells.append(
+            TableCell(
+                bbox=merged_bbox,
+                row_span=row_end - row_start,
+                col_span=col_end - col_start,
+                start_row_offset_idx=row_start,
+                end_row_offset_idx=row_end,
+                start_col_offset_idx=col_start,
+                end_col_offset_idx=col_end,
+                text=merged_text,
+                column_header=column_header,
+                row_header=row_header,
+                row_section=row_section,
+                fillable=fillable,
+            )
+        )
+
+    updated_cells.sort(
+        key=lambda cell: (
+            cell.start_row_offset_idx,
+            cell.start_col_offset_idx,
+            cell.end_row_offset_idx,
+            cell.end_col_offset_idx,
+        )
+    )
+    table.data.table_cells = updated_cells
+    table.data.num_cols = len(groups)
+    return True
+
+
+def collapse_document_table_groups(doc) -> int:
+    """Collapse header-driven column groups across all tables in a document."""
+    updated = 0
+    for item, _level in doc.iterate_items():
+        if isinstance(item, TableItem) and collapse_table_header_groups(item):
+            updated += 1
+    return updated
+
+
+def _choose_date_match(matches: list[re.Match[str]] | list[tuple[int, str]]) -> str:
+    candidates: list[tuple[int, int, int, str]] = []
+    for match in matches:
+        if isinstance(match, tuple):
+            start_idx, date_text = match
+        else:
+            start_idx, date_text = match.start(), match.group(0)
+        parts = _DATE_SEP_PATTERN.split(date_text)
+        year_len = len(parts[-1]) if parts else 0
+        day_len = len(parts[0]) if parts else 0
+        candidates.append((start_idx, year_len, day_len, date_text))
+    preferred = [item for item in candidates if item[1] == 4]
+    if preferred:
+        candidates = preferred
+    day_preferred = [item for item in candidates if item[2] == 2]
+    if day_preferred:
+        candidates = day_preferred
+    candidates.sort(key=lambda item: item[0])
+    return candidates[-1][3]
+
+
+def _overlapping_date_matches(pattern: re.Pattern[str], text: str) -> list[tuple[int, str]]:
+    overlapping = re.compile(rf"(?=({pattern.pattern}))")
+    return [(match.start(), match.group(1)) for match in overlapping.finditer(text)]
+
+
+def _repair_fuzzy_date(date_text: str) -> str:
+    sep_match = _DATE_SEP_PATTERN.search(date_text)
+    if not sep_match:
+        return date_text
+    sep = sep_match.group(0)
+    parts = _DATE_SEP_PATTERN.split(date_text)
+    if len(parts) != 3:
+        return date_text
+    day, month, year = parts
+    if len(day) > 2:
+        day = day[-2:]
+    if len(month) > 2:
+        month = month[-2:]
+    return sep.join([day, month, year])
+
+
+def _clean_header_text(text: str) -> str:
+    if not text:
+        return text
+    normalized = normalize_mojibake_text(text)
+    normalized = normalize_ligatures(normalized)
+    normalized = " ".join(normalized.split())
+    if _DELTA_PERCENT_PATTERN.match(normalized):
+        return "Δ%"
+    date_matches = list(_DATE_PATTERN.finditer(normalized))
+    chosen_year_len = 0
+    if date_matches:
+        chosen = _choose_date_match(date_matches)
+        chosen_year_len = len(_DATE_SEP_PATTERN.split(chosen)[-1])
+        has_full_year = any(
+            len(_DATE_SEP_PATTERN.split(match.group(0))[-1]) == 4
+            for match in date_matches
+        )
+        if len(date_matches) > 1 and (has_full_year or chosen_year_len == 4):
+            return chosen
+        if (
+            normalized != chosen
+            and re.fullmatch(r"[\d\s./-]+", normalized)
+            and chosen_year_len == 4
+        ):
+            return chosen
+
+    if (
+        chosen_year_len < 4
+        and normalized.count("/") + normalized.count(".") + normalized.count("-") > 2
+    ):
+        fuzzy_matches = _overlapping_date_matches(_DATE_FUZZY_PATTERN, normalized)
+        if fuzzy_matches:
+            fuzzy_chosen = _choose_date_match(fuzzy_matches)
+            repaired = _repair_fuzzy_date(fuzzy_chosen)
+            if normalized != repaired and re.fullmatch(r"[\d\s./-]+", normalized):
+                return repaired
+    words = normalized.split()
+    if len(words) % 2 == 0:
+        mid = len(words) // 2
+        if words[:mid] == words[mid:]:
+            return " ".join(words[:mid])
+    return normalized
+
+
+def _merge_leading_group(match: re.Match[str]) -> str:
+    lead = match.group(1)
+    tail = match.group(2)
+    if tail.count(".") >= 2:
+        return tail
+    return f"{lead}.{tail}"
+
+
+def _clean_table_cell_text(text: str) -> str:
+    if not text:
+        return text
+    cleaned = normalize_mojibake_text(text)
+    cleaned = normalize_ligatures(cleaned).strip()
+    if _DELTA_PERCENT_PATTERN.match(cleaned):
+        return "Δ%"
+    cleaned = _DUP_PERCENT_PATTERN.sub(r"\1%", cleaned)
+    cleaned = _SPACED_PERCENT_PATTERN.sub(r"\1%", cleaned)
+    cleaned = _NEGATIVE_SPACE_PATTERN.sub("-", cleaned)
+    cleaned = _DUP_GROUP_PATTERN.sub(r"\1\2", cleaned)
+    cleaned = _LEADING_GROUP_PATTERN.sub(_merge_leading_group, cleaned)
+    cleaned = " ".join(cleaned.split())
+    cleaned = _compact_number_spacing(cleaned)
+    cleaned = _normalize_currency_suffix(cleaned)
+    cleaned = _fix_missing_currency_letter(cleaned)
+    cleaned = _strip_trailing_currency_fragment(cleaned)
+    cleaned = _strip_currency_prefix_dup(cleaned)
+    cleaned = _strip_duplicate_currency_suffix(cleaned)
+    cleaned = _dedupe_repeated_currency_value(cleaned)
+    return cleaned
+
+
+def normalize_table_header_text(table: TableItem) -> int:
+    """Normalize duplicated or merged header labels in a table."""
+    updated = 0
+    for cell in table.data.table_cells:
+        if cell.start_row_offset_idx != 0:
+            continue
+        cleaned = _clean_header_text(cell.text)
+        if cleaned != cell.text:
+            cell.text = cleaned
+            updated += 1
+    return updated
+
+
+def normalize_document_table_headers(doc) -> int:
+    """Normalize header labels across all tables in a document."""
+    updated = 0
+    for item, _level in doc.iterate_items():
+        if isinstance(item, TableItem):
+            updated += normalize_table_header_text(item)
+    return updated
+
+
+def clean_document_table_cells(doc) -> int:
+    """Normalize numeric/percent quirks in table cells after repairs."""
+    updated = 0
+    for item, _level in doc.iterate_items():
+        if isinstance(item, TableItem):
+            for cell in item.data.table_cells:
+                cleaned = _clean_table_cell_text(cell.text)
+                if cleaned != cell.text:
+                    cell.text = cleaned
+                    updated += 1
+    return updated
 
 
 def merge_spaced_table_cells(

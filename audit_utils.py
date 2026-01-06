@@ -32,6 +32,7 @@ class AuditMetrics:
     spaced_table_cells: int
     total_table_cells: int
     spaced_text_items: int
+    multi_space_text_items: int
     total_text_items: int
 
 
@@ -47,13 +48,15 @@ class PageAudit:
 
 _SPACED_TEXT_PATTERN = re.compile(r"(?:\b\w\b\s+){1,}\b\w\b", flags=re.UNICODE)
 _SPACED_DIGIT_PATTERN = re.compile(r"(?:\b\d\b\s+){3,}\b\d\b")
-_SPLIT_WORD_PATTERN = re.compile(r"\b\w{2,}\s+\w\s+\w{2,}\b", flags=re.UNICODE)
+_SPLIT_WORD_PATTERN = re.compile(r"\b(\w{2,})\s+(\w)\s+(\w{2,})\b", flags=re.UNICODE)
 _SPACED_NUMBER_PATTERN = re.compile(r"\d\s+[.,/]?\s*\d")
 _RUNON_LETTERS_PATTERN = re.compile(r"(?:[^\W\d_]{20,})", flags=re.UNICODE)
 _RUNON_MERGED_ALNUM_PATTERN = re.compile(
     r"(?:[^\W\d_]{6,}\d{2,}[^\W\d_]{2,}|\d{2,}[^\W\d_]{6,})",
     flags=re.UNICODE,
 )
+_MULTI_SPACE_PATTERN = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
+_COMMON_SINGLE_LETTER_WORDS = {"a", "A", "I", "i", "o", "O"}
 _LETTER_CHARS = r"A-Za-zĂÂÎȘȚăâîșț"
 _SHORT_ALPHA_SEQ_PATTERN = re.compile(
     rf"(?:\b[{_LETTER_CHARS}]{{1,2}}\b\s+){{2,}}\b[{_LETTER_CHARS}]{{1,2}}\b",
@@ -63,6 +66,7 @@ _TRAILING_SINGLE_ALPHA_PATTERN = re.compile(
     rf"\b[{_LETTER_CHARS}]{{2,}}\s+[{_LETTER_CHARS}]{{1}}\b",
     flags=re.UNICODE,
 )
+_SOLD_SUFFIX_PATTERN = re.compile(r"\bSOLD\s+[CD]\b", flags=re.IGNORECASE)
 
 
 def is_spaced_text(text: str) -> bool:
@@ -75,14 +79,40 @@ def is_spaced_text(text: str) -> bool:
         return True
     if len(text) < 6:
         return False
-    if _SPLIT_WORD_PATTERN.search(text):
-        return True
+
+    split_matches = list(_SPLIT_WORD_PATTERN.finditer(text))
+    if split_matches:
+        for match in split_matches:
+            middle = match.group(2)
+            if not middle.isalpha():
+                continue
+            if middle not in _COMMON_SINGLE_LETTER_WORDS:
+                return True
 
     tokens = [tok for tok in text.split() if tok]
     if len(tokens) < 4:
         return False
     single_tokens = [tok for tok in tokens if len(tok) == 1]
-    return (len(single_tokens) / len(tokens)) >= 0.5
+    if (len(single_tokens) / len(tokens)) >= 0.5:
+        return True
+
+    if split_matches:
+        rare_single_tokens = [
+            tok
+            for tok in single_tokens
+            if tok.isalpha() and tok not in _COMMON_SINGLE_LETTER_WORDS
+        ]
+        if len(rare_single_tokens) >= 2:
+            return True
+        if single_tokens and (len(rare_single_tokens) / len(single_tokens)) >= 0.5:
+            return True
+
+    return False
+
+
+def is_multi_space_text(text: str) -> bool:
+    """Detect multiple spaces/tabs between tokens without other spacing artifacts."""
+    return bool(_MULTI_SPACE_PATTERN.search(text))
 
 def is_collapsed_text(text: str) -> bool:
     """Detect run-on text where spaces are likely missing between words."""
@@ -126,6 +156,8 @@ def needs_table_spacing_fix(text: str) -> bool:
     if _SHORT_ALPHA_SEQ_PATTERN.search(text):
         return True
     if _TRAILING_SINGLE_ALPHA_PATTERN.search(text):
+        if _SOLD_SUFFIX_PATTERN.search(text):
+            return False
         return True
     return False
 
@@ -225,6 +257,7 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
     spaced_cells = 0
     total_cells = 0
     spaced_text_items = 0
+    multi_space_text_items = 0
     total_text_items = 0
     for item, _level in doc.iterate_items():
         if isinstance(item, TableItem):
@@ -237,7 +270,13 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
             if not text:
                 continue
             total_text_items += 1
-            if needs_spacing_fix(text):
+            if is_multi_space_text(text):
+                multi_space_text_items += 1
+            if needs_spacing_fix(text) and not (
+                is_multi_space_text(text)
+                and not is_spaced_text(text)
+                and not is_collapsed_text(text)
+            ):
                 spaced_text_items += 1
 
     return AuditMetrics(
@@ -254,6 +293,7 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
         spaced_table_cells=spaced_cells,
         total_table_cells=total_cells,
         spaced_text_items=spaced_text_items,
+        multi_space_text_items=multi_space_text_items,
         total_text_items=total_text_items,
     )
 
@@ -315,5 +355,6 @@ def format_audit(metrics: AuditMetrics) -> str:
         f"headings_pdf={metrics.heading_count_pdf}, headings_md={metrics.heading_count_md}, "
         f"pdf_text_len={metrics.pdf_text_length}, md_text_len={metrics.md_text_length}, "
         f"spaced_cells={metrics.spaced_table_cells}/{metrics.total_table_cells}, "
-        f"spacing_issue_text_items={metrics.spaced_text_items}/{metrics.total_text_items}"
+        f"spacing_issue_text_items={metrics.spaced_text_items}/{metrics.total_text_items}, "
+        f"multi_space_text_items={metrics.multi_space_text_items}/{metrics.total_text_items}"
     )

@@ -33,9 +33,17 @@ from audit_utils import (
     needs_spacing_fix,
     needs_table_spacing_fix,
 )
+from date_cleanup import remove_date_only_text_inside_pictures
+from export_utils import add_visible_page_markers, reduce_markdown_noise
 from pymupdf_spacing_fix import fix_spaced_items_with_pymupdf_glyphs
 from spacing_fix import fix_spaced_items_with_word_cells
-from table_fixes import merge_spaced_table_cells
+from table_fixes import (
+    collapse_document_table_groups,
+    clean_document_table_cells,
+    merge_spaced_table_cells,
+    normalize_document_table_headers,
+)
+from whitespace_fix import normalize_document_text_whitespace
 from quality import QualityReport, format_report, score_markdown
 
 
@@ -199,16 +207,25 @@ def convert_pdf_to_markdown(
         quiet=quiet,
     )
 
+    page_break_marker = f"\n\n{PAGE_BREAK_PLACEHOLDER}\n\n"
     result.document.save_as_markdown(
         output_path,
         artifacts_dir=images_dir,
         image_mode=image_mode,
         labels=export_labels,
-        page_break_placeholder="\n\n<!-- page break -->\n\n",
+        page_break_placeholder=page_break_marker,
         include_annotations=False,
         escaping_underscores=True,
         included_content_layers={ContentLayer.BODY},
     )
+    markdown_text = output_path.read_text(encoding="utf-8")
+    markdown_text = add_visible_page_markers(markdown_text, PAGE_BREAK_PLACEHOLDER)
+    markdown_text = reduce_markdown_noise(
+        markdown_text,
+        PAGE_BREAK_PLACEHOLDER,
+        remove_image_placeholders=image_mode is ImageRefMode.PLACEHOLDER,
+    )
+    output_path.write_text(markdown_text, encoding="utf-8")
 
     return result, backend_name
 
@@ -401,5 +418,21 @@ def convert_pdf_to_doc(
                     f"table_cells={report.table_cells}, "
                     f"text_items={report.text_items}, {page_info}"
                 )
+
+    collapsed_tables = collapse_document_table_groups(result.document)
+    normalized_headers = normalize_document_table_headers(result.document)
+    cleaned_cells = clean_document_table_cells(result.document)
+    normalized_text = normalize_document_text_whitespace(result.document)
+    removed_dates = remove_date_only_text_inside_pictures(result.document)
+    if not quiet and collapsed_tables:
+        print(f"Collapsed header column groups in {collapsed_tables} tables.")
+    if not quiet and normalized_headers:
+        print(f"Normalized header labels in {normalized_headers} table cells.")
+    if not quiet and cleaned_cells:
+        print(f"Cleaned {cleaned_cells} table cell values.")
+    if not quiet and normalized_text:
+        print(f"Normalized whitespace in {normalized_text} text items.")
+    if not quiet and removed_dates:
+        print(f"Removed {removed_dates} date-only text items inside images.")
 
     return result, backend_name, export_labels

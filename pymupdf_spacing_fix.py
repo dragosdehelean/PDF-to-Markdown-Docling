@@ -22,6 +22,10 @@ _MERGED_ALNUM = re.compile(
     r"(?:[^\W\d_]{6,}\d{2,}[^\W\d_]{2,}|\d{2,}[^\W\d_]{6,})", flags=re.UNICODE
 )
 _NUMERIC_ONLY = re.compile(r"[0-9\s.,/%()-]+")
+_SUSPICIOUS_NUMERIC = re.compile(r"^[.,]?\d[.,]?$")
+_TRAILING_ALPHA = re.compile(r"[A-Za-zĂÂÎăâîșșțȚȘ]$", flags=re.UNICODE)
+_ALPHA_TOKEN = re.compile(r"[A-Za-zĂÂÎăâîșșțȚȘ]+", flags=re.UNICODE)
+_VOWELS = set("aeiouAEIOUăâîĂÂÎ")
 
 
 @dataclass(frozen=True)
@@ -217,8 +221,94 @@ def _spacing_badness(text: str) -> float:
     return badness
 
 
+def _expand_suffix_with_pad(
+    page: fitz.Page,
+    bbox: BoundingBox,
+    *,
+    pad: float,
+    gap_ratio: float,
+    line_ratio: float,
+    space_width_ratio: float,
+    base_text: str,
+) -> str:
+    if not _needs_suffix_completion(base_text):
+        return base_text
+    clip = _clip_rect(page, bbox, pad * 3.0)
+    if clip is None:
+        return base_text
+    words = _extract_words(page, clip)
+    reconstructed = _compact_numeric_spacing(_reconstruct_from_words(words))
+    if reconstructed and _should_replace_text(base_text, reconstructed, table_mode=True):
+        return reconstructed
+    chars = _extract_chars(page, clip)
+    reconstructed = _compact_numeric_spacing(
+        _reconstruct_from_chars(
+            chars,
+            gap_ratio=gap_ratio,
+            line_ratio=line_ratio,
+            space_width_ratio=space_width_ratio,
+        )
+    )
+    if reconstructed and _should_replace_text(base_text, reconstructed, table_mode=True):
+        return reconstructed
+    return base_text
+
+
+def _numeric_only(text: str) -> bool:
+    return bool(_NUMERIC_ONLY.fullmatch(text.strip()))
+
+
+def _needs_numeric_repair(text: str) -> bool:
+    if not _numeric_only(text):
+        return False
+    stripped = text.strip()
+    if not stripped:
+        return True
+    digits = re.sub(r"\D", "", stripped)
+    if not digits:
+        return True
+    if len(digits) <= 2:
+        return True
+    if _SUSPICIOUS_NUMERIC.fullmatch(stripped):
+        return True
+    if stripped.startswith((".", ",")) and len(digits) <= 4:
+        return True
+    return False
+
+
+def _needs_short_text_repair(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return True
+    return stripped.isalpha() and len(stripped) <= 2
+
+
+def _needs_suffix_completion(text: str) -> bool:
+    stripped = text.strip()
+    if len(stripped) < 6:
+        return False
+    tokens = _ALPHA_TOKEN.findall(stripped)
+    if not tokens:
+        return False
+    last_token = tokens[-1]
+    if len(last_token) < 6:
+        return False
+    if not _TRAILING_ALPHA.search(last_token):
+        return False
+    return last_token[-1] not in _VOWELS
+
+
+def _needs_table_cell_repair(text: str) -> bool:
+    return (
+        needs_table_spacing_fix(text)
+        or _needs_numeric_repair(text)
+        or _needs_short_text_repair(text)
+        or _needs_suffix_completion(text)
+    )
+
+
 def _compact_numeric_spacing(text: str) -> str:
-    if not _NUMERIC_ONLY.fullmatch(text):
+    if not _numeric_only(text):
         return text
     text = re.sub(r"(?<=\d)\s+(?=\d)", "", text)
     text = re.sub(r"(?<=\d)\s+(?=[.,/%])", "", text)
@@ -230,6 +320,25 @@ def _compact_numeric_spacing(text: str) -> str:
 def _should_replace_text(old: str, new: str, *, table_mode: bool = False) -> bool:
     if not new or new == old:
         return False
+    if not old.strip():
+        return True
+    if new.startswith(old) and 0 < (len(new) - len(old)) <= 3:
+        return True
+    old_tokens = re.findall(r"\w+", old, flags=re.UNICODE)
+    new_tokens = re.findall(r"\w+", new, flags=re.UNICODE)
+    if table_mode and needs_table_spacing_fix(old) and old_tokens:
+        if len(new_tokens) <= max(1, int(len(old_tokens) * 0.6)):
+            return True
+    if _needs_numeric_repair(old) and _numeric_only(new):
+        old_digits = len(re.sub(r"\D", "", old))
+        new_digits = len(re.sub(r"\D", "", new))
+        if new_digits > old_digits:
+            return True
+    if _needs_short_text_repair(old) and len(new) > len(old):
+        return True
+    if old.isalpha() and new.isalpha():
+        if new.startswith(old) and 0 < (len(new) - len(old)) <= 3:
+            return True
     if len(new) < max(8, int(len(old) * 0.4)):
         if not (is_spaced_text(old) or _NUMERIC_ONLY.fullmatch(old)):
             return False
@@ -281,9 +390,12 @@ def fix_spaced_items_with_pymupdf_glyphs(
                 if page is None:
                     continue
                 for cell in item.data.table_cells:
-                    if cell.bbox is None or not needs_table_spacing_fix(cell.text):
+                    if cell.bbox is None or not _needs_table_cell_repair(cell.text):
                         continue
                     bbox = _bbox_to_top_left(cell.bbox, page.rect.height)
+                    original_text = cell.text
+                    replaced = False
+
                     clip = _clip_rect(page, bbox, pad)
                     if clip is None:
                         continue
@@ -292,24 +404,64 @@ def fix_spaced_items_with_pymupdf_glyphs(
                         _reconstruct_from_words(words)
                     )
                     if reconstructed and not needs_spacing_fix(reconstructed):
-                        if _should_replace_text(cell.text, reconstructed, table_mode=True):
-                            cell.text = reconstructed
-                            table_replaced += 1
-                        continue
-                    chars = _extract_chars(page, clip)
-                    reconstructed = _compact_numeric_spacing(
-                        _reconstruct_from_chars(
-                            chars,
+                        reconstructed = _expand_suffix_with_pad(
+                            page,
+                            bbox,
+                            pad=pad,
                             gap_ratio=gap_ratio,
                             line_ratio=line_ratio,
                             space_width_ratio=space_width_ratio,
+                            base_text=reconstructed,
                         )
-                    )
-                    if reconstructed and _should_replace_text(
-                        cell.text, reconstructed, table_mode=True
-                    ):
-                        cell.text = reconstructed
-                        table_replaced += 1
+                        if _should_replace_text(original_text, reconstructed, table_mode=True):
+                            cell.text = reconstructed
+                            table_replaced += 1
+                            replaced = True
+                        else:
+                            reconstructed = ""
+                    if not replaced:
+                        chars = _extract_chars(page, clip)
+                        reconstructed = _compact_numeric_spacing(
+                            _reconstruct_from_chars(
+                                chars,
+                                gap_ratio=gap_ratio,
+                                line_ratio=line_ratio,
+                                space_width_ratio=space_width_ratio,
+                            )
+                        )
+                        if reconstructed:
+                            reconstructed = _expand_suffix_with_pad(
+                                page,
+                                bbox,
+                                pad=pad,
+                                gap_ratio=gap_ratio,
+                                line_ratio=line_ratio,
+                                space_width_ratio=space_width_ratio,
+                                base_text=reconstructed,
+                            )
+                        if reconstructed and _should_replace_text(
+                            original_text, reconstructed, table_mode=True
+                        ):
+                            cell.text = reconstructed
+                            table_replaced += 1
+                            replaced = True
+
+                    if not replaced and _needs_suffix_completion(original_text):
+                        # WHY: Expand bbox padding to capture trailing glyphs for clipped words.
+                        reconstructed = _expand_suffix_with_pad(
+                            page,
+                            bbox,
+                            pad=pad,
+                            gap_ratio=gap_ratio,
+                            line_ratio=line_ratio,
+                            space_width_ratio=space_width_ratio,
+                            base_text=original_text,
+                        )
+                        if reconstructed and _should_replace_text(
+                            original_text, reconstructed, table_mode=True
+                        ):
+                            cell.text = reconstructed
+                            table_replaced += 1
             else:
                 text = getattr(item, "text", None)
                 if not text or not needs_spacing_fix(text):

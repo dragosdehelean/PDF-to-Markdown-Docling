@@ -46,7 +46,9 @@ Options
 Notes
 - Default image mode is `placeholder` for clean RAG text. Use `referenced` to keep chart/table images.
 - PDF conversion uses a high-accuracy layout model, accurate table extraction, and filters page headers/footers.
-- Page breaks are marked with `<!-- page break -->` to help chunking for RAG.
+- Tables with header-spanned columns (e.g., currency + value pairs) are collapsed into single columns.
+- Page breaks are marked with `<!-- page break -->`, and pages are annotated with `[//]: # (page: N)`.
+- Excess whitespace between words is normalized in non-table text.
 - CUDA builds of `torch` and `torchvision` are pinned via `pyproject.toml` using the PyTorch cu128 index.
 
 Quality check
@@ -58,3 +60,7 @@ Audit PDF vs MD (standalone)
 ```powershell
 uv run python tools\\audit_pdf_vs_md.py "D:\\reports\\financial_report.pdf" "D:\\rag\\financial_report.md"
 ```
+
+Integration tests
+- Set `FIN_REPORT_PDF` in your environment or add it to a local `.env` file in the repo root.
+- The integration test uses `page_range=(1, 8)` instead of `max_pages` because Docling marks inputs invalid when `max_pages` is lower than the PDF's actual page count.
