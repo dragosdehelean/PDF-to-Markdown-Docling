@@ -42,6 +42,17 @@ _CURRENCY_EXTRA_PREFIX_PATTERN = re.compile(
 _CURRENCY_ON_MIDDLE_PATTERN = re.compile(
     r"^(\d{1,3}(?:[.,]\d+)?)\s+ON\s+(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)\s+(RON|EUR)$"
 )
+_CURRENCY_PREFIX_ONLY_PATTERN = re.compile(
+    r"^(\d{1,2})\s+(RON|EUR)\s+(\d{1,3}(?:\.\d{3}){1,}(?:[.,]\d+)?)$"
+)
+_CURRENCY_RO_TOKEN_PATTERN = re.compile(r"\bRO\b")
+_CURRENCY_TOKEN_PATTERN = re.compile(r"\b(RON|EUR)\b")
+_NUMBER_TOKEN_PATTERN = re.compile(r"[+-]?\(?[.,]?\d[\d.,]*\)?")
+_CURRENCY_TRAILING_SHORT_PATTERN = re.compile(
+    r"^(\d{1,3}(?:\.\d{3}){1,})\s+(RON|EUR)\s+(\d{1,2})$"
+)
+_PARENS_SPACE_OPEN_PATTERN = re.compile(r"\(\s+(?=\d)")
+_PARENS_SPACE_CLOSE_PATTERN = re.compile(r"(?<=\d)\s+\)")
 _NEGATIVE_SPACE_PATTERN = re.compile(r"(?<!\w)-\s+(?=\d)")
 
 
@@ -51,6 +62,77 @@ def _is_numericish(text: str) -> bool:
 
 def _digits_only(value: str) -> str:
     return re.sub(r"\D", "", value)
+
+
+def _extract_currency_number(text: str) -> tuple[str | None, str] | None:
+    normalized = " ".join(text.split())
+    currencies = set(_CURRENCY_TOKEN_PATTERN.findall(normalized))
+    numbers = _NUMBER_TOKEN_PATTERN.findall(normalized)
+    numbers = [num for num in numbers if _digits_only(num)]
+    if not numbers:
+        return None
+    if currencies:
+        if len(currencies) != 1 or len(numbers) != 1:
+            return None
+        return next(iter(currencies)), numbers[0]
+    if any(ch.isalpha() for ch in normalized):
+        return None
+    if len(numbers) != 1:
+        return None
+    return None, numbers[0]
+
+
+def _normalize_number_token(token: str) -> str:
+    cleaned = token.strip().strip("()")
+    cleaned = cleaned.lstrip("+-").replace(" ", "")
+    return cleaned
+
+
+def _number_grouping_is_valid(token: str) -> bool:
+    normalized = _normalize_number_token(token)
+    if not normalized:
+        return False
+    if normalized[0] in {".", ","} or normalized[-1] in {".", ","}:
+        return False
+    if "," in normalized and "." in normalized:
+        if normalized.rfind(",") > normalized.rfind("."):
+            normalized = normalized.split(",", 1)[0]
+        else:
+            normalized = normalized.replace(",", "")
+    elif "," in normalized:
+        if normalized.count(",") == 1:
+            normalized = normalized.split(",", 1)[0]
+        normalized = normalized.replace(",", "")
+
+    if "." not in normalized:
+        return True
+    groups = normalized.split(".")
+    if not groups[0]:
+        return False
+    for group in groups[1:]:
+        if len(group) != 3:
+            return False
+    return True
+
+
+def _is_negative_number_text(text: str) -> bool:
+    stripped = text.strip()
+    if stripped.startswith("-"):
+        return True
+    return "(" in stripped and ")" in stripped
+
+
+def _is_suspect_currency_cell(text: str) -> bool:
+    data = _extract_currency_number(text)
+    if not data:
+        return False
+    _currency, number = data
+    normalized = _normalize_number_token(number)
+    if not normalized:
+        return False
+    if normalized[0] in {".", ","} or normalized[-1] in {".", ","}:
+        return True
+    return not _number_grouping_is_valid(normalized)
 
 
 def _strip_trailing_currency_fragment(text: str) -> str:
@@ -81,6 +163,13 @@ def _strip_currency_prefix_dup(text: str) -> str:
     if prefix and value.startswith(prefix):
         return f"{match.group(2)} {match.group(3)}"
     return text
+
+
+def _strip_currency_trailing_short_token(text: str) -> str:
+    match = _CURRENCY_TRAILING_SHORT_PATTERN.match(text)
+    if not match:
+        return text
+    return f"{match.group(2)} {match.group(1)}"
 
 
 def _strip_duplicate_currency_suffix(text: str) -> str:
@@ -116,6 +205,8 @@ def _normalize_currency_suffix(text: str) -> str:
 def _fix_missing_currency_letter(text: str) -> str:
     match = _CURRENCY_MISSING_R_PATTERN.match(text)
     if not match:
+        if _is_numericish(text) and _CURRENCY_RO_TOKEN_PATTERN.search(text) and "RON" not in text:
+            return _CURRENCY_RO_TOKEN_PATTERN.sub("RON", text)
         return text
     return f"RON {match.group(1)}"
 
@@ -136,7 +227,30 @@ def _dedupe_repeated_currency_value(text: str) -> str:
         value_digits = _digits_only(match.group(2))
         if prefix_digits and value_digits.startswith(prefix_digits):
             return f"{match.group(3)} {match.group(2)}"
+    match = _CURRENCY_PREFIX_ONLY_PATTERN.match(text)
+    if match:
+        prefix_digits = _digits_only(match.group(1))
+        value_digits = _digits_only(match.group(3))
+        if prefix_digits and not value_digits.startswith(prefix_digits):
+            return f"{match.group(2)} {match.group(3)}"
     return text
+
+
+def _dedupe_dates_in_cell(text: str) -> str:
+    dates = _DATE_PATTERN.findall(text)
+    if len(dates) < 2:
+        return text
+    if any(ch.isalpha() for ch in text):
+        return text
+    # Prefer the date with a 4-digit year and longest token.
+    scored = []
+    for date in dates:
+        parts = _DATE_SEP_PATTERN.split(date)
+        year_len = len(parts[-1]) if parts else 0
+        scored.append((year_len, len(date), date))
+    scored.sort()
+    best = scored[-1][2]
+    return best
 
 
 def _table_page_no(table: TableItem) -> int | None:
@@ -414,14 +528,59 @@ def _clean_table_cell_text(text: str) -> str:
     cleaned = _DUP_GROUP_PATTERN.sub(r"\1\2", cleaned)
     cleaned = _LEADING_GROUP_PATTERN.sub(_merge_leading_group, cleaned)
     cleaned = " ".join(cleaned.split())
+    if any(ch.isdigit() for ch in cleaned):
+        cleaned = cleaned.strip("[]")
     cleaned = _compact_number_spacing(cleaned)
+    if _is_numericish(cleaned):
+        cleaned = _PARENS_SPACE_OPEN_PATTERN.sub("(", cleaned)
+        cleaned = _PARENS_SPACE_CLOSE_PATTERN.sub(")", cleaned)
     cleaned = _normalize_currency_suffix(cleaned)
     cleaned = _fix_missing_currency_letter(cleaned)
+    cleaned = _strip_currency_trailing_short_token(cleaned)
+    cleaned = _dedupe_dates_in_cell(cleaned)
     cleaned = _strip_trailing_currency_fragment(cleaned)
     cleaned = _strip_currency_prefix_dup(cleaned)
     cleaned = _strip_duplicate_currency_suffix(cleaned)
     cleaned = _dedupe_repeated_currency_value(cleaned)
     return cleaned
+
+
+def _should_replace_numeric_cell(base_text: str, ocr_text: str) -> bool:
+    if not base_text or not ocr_text:
+        return False
+    if is_spaced_text(ocr_text):
+        return False
+    base_clean = _clean_table_cell_text(base_text)
+    ocr_clean = _clean_table_cell_text(ocr_text)
+    if base_clean == ocr_clean:
+        return False
+    base_info = _extract_currency_number(base_clean)
+    ocr_info = _extract_currency_number(ocr_clean)
+    if not base_info or not ocr_info:
+        return False
+    if (base_info[0] is None) != (ocr_info[0] is None):
+        return False
+    if base_info[0] is not None and ocr_info[0] is not None and base_info[0] != ocr_info[0]:
+        return False
+    if _is_negative_number_text(base_clean) != _is_negative_number_text(ocr_clean):
+        return False
+
+    base_num = base_info[1]
+    ocr_num = ocr_info[1]
+    base_digits = _digits_only(base_num)
+    ocr_digits = _digits_only(ocr_num)
+    if not base_digits or not ocr_digits:
+        return False
+    if len(ocr_digits) <= len(base_digits):
+        return False
+    if not _number_grouping_is_valid(ocr_num):
+        return False
+    if _is_suspect_currency_cell(base_clean):
+        return True
+    if ocr_digits.endswith(base_digits):
+        if len(ocr_digits) - len(base_digits) <= 2:
+            return True
+    return False
 
 
 def normalize_table_header_text(table: TableItem) -> int:
@@ -457,6 +616,170 @@ def clean_document_table_cells(doc) -> int:
                     cell.text = cleaned
                     updated += 1
     return updated
+
+
+def normalize_table_currency_columns(table: TableItem) -> int:
+    """Align currency labels within each numeric column to the dominant currency."""
+    num_cols = table.data.num_cols
+    if num_cols <= 0:
+        return 0
+
+    counts: list[dict[str, int]] = [defaultdict(int) for _ in range(num_cols)]
+    for cell in table.data.table_cells:
+        if cell.start_row_offset_idx == 0:
+            continue
+        if cell.end_col_offset_idx - cell.start_col_offset_idx != 1:
+            continue
+        text = cell.text or ""
+        match = _CURRENCY_TOKEN_PATTERN.search(text)
+        if not match:
+            continue
+        currency = match.group(1)
+        counts[cell.start_col_offset_idx][currency] += 1
+
+    dominant: list[str | None] = [None] * num_cols
+    for col, counter in enumerate(counts):
+        if not counter:
+            continue
+        total = sum(counter.values())
+        currency, freq = max(counter.items(), key=lambda item: item[1])
+        if total >= 2 and (freq / total) >= 0.7:
+            dominant[col] = currency
+
+    updated = 0
+    for cell in table.data.table_cells:
+        if cell.start_row_offset_idx == 0:
+            continue
+        if cell.end_col_offset_idx - cell.start_col_offset_idx != 1:
+            continue
+        desired = dominant[cell.start_col_offset_idx]
+        if not desired:
+            continue
+        text = cell.text or ""
+        match = _CURRENCY_TOKEN_PATTERN.search(text)
+        if not match:
+            continue
+        if match.group(1) == desired:
+            continue
+        new_text = _CURRENCY_TOKEN_PATTERN.sub(desired, text)
+        if new_text != text:
+            cell.text = new_text
+            updated += 1
+
+    return updated
+
+
+def normalize_document_table_currencies(doc) -> int:
+    """Normalize currency labels across all tables in a document."""
+    updated = 0
+    for item, _level in doc.iterate_items():
+        if isinstance(item, TableItem):
+            updated += normalize_table_currency_columns(item)
+    return updated
+
+
+def count_suspect_table_cells(doc) -> int:
+    """Count table cells that look like truncated currency values."""
+    count = 0
+    for item, _level in doc.iterate_items():
+        if isinstance(item, TableItem):
+            for cell in item.data.table_cells:
+                if not cell.text:
+                    continue
+                cleaned = _clean_table_cell_text(cell.text)
+                if _is_suspect_currency_cell(cleaned):
+                    count += 1
+    return count
+
+
+def merge_suspect_table_cells(base_doc, ocr_doc) -> int:
+    """Replace suspect numeric table cells with higher-quality OCR versions."""
+    base_tables = [item for item, _ in base_doc.iterate_items() if isinstance(item, TableItem)]
+    ocr_tables = [item for item, _ in ocr_doc.iterate_items() if isinstance(item, TableItem)]
+
+    base_by_page = _tables_by_page(base_tables)
+    ocr_by_page = _tables_by_page(ocr_tables)
+
+    replaced = 0
+
+    for page_no, base_page_tables in base_by_page.items():
+        ocr_page_tables = ocr_by_page.get(page_no, [])
+        if not ocr_page_tables:
+            continue
+
+        used = set()
+        for base_table in base_page_tables:
+            match_idx = None
+            for idx, ocr_table in enumerate(ocr_page_tables):
+                if idx in used:
+                    continue
+                if (
+                    base_table.data.num_rows == ocr_table.data.num_rows
+                    and base_table.data.num_cols == ocr_table.data.num_cols
+                ):
+                    match_idx = idx
+                    break
+            if match_idx is None:
+                continue
+            used.add(match_idx)
+            ocr_table = ocr_page_tables[match_idx]
+
+            ocr_cells = _table_cells_by_key(ocr_table)
+            for cell in base_table.data.table_cells:
+                if not cell.text:
+                    continue
+                key = (
+                    cell.start_row_offset_idx,
+                    cell.end_row_offset_idx,
+                    cell.start_col_offset_idx,
+                    cell.end_col_offset_idx,
+                )
+                ocr_text = ocr_cells.get(key, "")
+                if not ocr_text:
+                    continue
+                if _should_replace_numeric_cell(cell.text, ocr_text):
+                    cell.text = ocr_text
+                    replaced += 1
+
+    ocr_cells_by_page = _collect_cells_by_page(ocr_tables)
+    for page_no, base_page_tables in base_by_page.items():
+        ocr_cells = ocr_cells_by_page.get(page_no, [])
+        if not ocr_cells:
+            continue
+        for base_table in base_page_tables:
+            for cell in base_table.data.table_cells:
+                if not cell.text or cell.bbox is None:
+                    continue
+
+                base_area = _bbox_area(cell.bbox)
+                if base_area <= 0:
+                    continue
+
+                best_text = ""
+                best_score = 0.0
+                for ocr_bbox, ocr_text in ocr_cells:
+                    if not ocr_text or is_spaced_text(ocr_text):
+                        continue
+                    inter_area = _bbox_intersection_area(cell.bbox, ocr_bbox)
+                    if inter_area <= 0:
+                        continue
+                    ocr_area = _bbox_area(ocr_bbox)
+                    if ocr_area <= 0:
+                        continue
+                    base_cover = inter_area / base_area
+                    ocr_cover = inter_area / ocr_area
+                    if base_cover < 0.5 or ocr_cover < 0.15:
+                        continue
+                    score = base_cover * 0.7 + ocr_cover * 0.3
+                    if score > best_score:
+                        best_score = score
+                        best_text = ocr_text
+
+                if best_text and _should_replace_numeric_cell(cell.text, best_text):
+                    cell.text = best_text
+                    replaced += 1
+
+    return replaced
 
 
 def merge_spaced_table_cells(

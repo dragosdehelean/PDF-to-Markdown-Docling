@@ -9,7 +9,10 @@ from docling_core.types.doc.document import TableCell, TableData, TableItem
 from table_fixes import (
     collapse_table_header_groups,
     normalize_table_header_text,
+    normalize_table_currency_columns,
     _clean_table_cell_text,
+    _is_suspect_currency_cell,
+    _should_replace_numeric_cell,
 )
 
 
@@ -403,6 +406,109 @@ class TableFixesTests(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, "-45,40%")
+
+    def test_clean_table_cell_text_fixes_ro_currency_token(self) -> None:
+        # Arrange
+        value = "7 RO 133.339.798 R"
+
+        # Act
+        result = _clean_table_cell_text(value)
+
+        # Assert
+        self.assertEqual(result, "RON 133.339.798")
+
+    def test_clean_table_cell_text_compacts_paren_spacing(self) -> None:
+        # Arrange
+        value = "EUR ( 420 )"
+
+        # Act
+        result = _clean_table_cell_text(value)
+
+        # Assert
+        self.assertEqual(result, "EUR (420)")
+
+    def test_clean_table_cell_text_dedupes_dates(self) -> None:
+        # Arrange
+        value = "31/12/20 31/12/2024"
+
+        # Act
+        result = _clean_table_cell_text(value)
+
+        # Assert
+        self.assertEqual(result, "31/12/2024")
+
+    def test_clean_table_cell_text_strips_square_brackets(self) -> None:
+        value = "RON 471.371]"
+        result = _clean_table_cell_text(value)
+        self.assertEqual(result, "RON 471.371")
+
+    def test_clean_table_cell_text_strips_currency_trailing_short_token(self) -> None:
+        value = "115.784.991 RON 7"
+        result = _clean_table_cell_text(value)
+        self.assertEqual(result, "RON 115.784.991")
+
+    def test_normalize_table_currency_columns_aligns_mismatch(self) -> None:
+        table = _build_sample_table()
+        # Add extra data rows to build a dominant currency per column.
+        base_row = [
+            ("ALT RAND", 0),
+            ("RON", 1),
+            ("1.000.000", 2),
+            ("RON", 3),
+            ("900.000", 4),
+            ("EUR", 5),
+            ("200.000", 6),
+            ("EUR", 7),
+            ("180.000", 8),
+            ("10,00%", 9),
+        ]
+        for row_idx in (2, 3, 4):
+            for text, col in base_row:
+                table.data.table_cells.append(
+                    TableCell(
+                        start_row_offset_idx=row_idx,
+                        end_row_offset_idx=row_idx + 1,
+                        start_col_offset_idx=col,
+                        end_col_offset_idx=col + 1,
+                        text=text,
+                    )
+                )
+        table.data.num_rows = 5
+        collapse_table_header_groups(table)
+        # Flip one cell currency in the first numeric column after collapse.
+        for cell in table.data.table_cells:
+            if cell.start_row_offset_idx == 1 and cell.start_col_offset_idx == 1:
+                cell.text = "EUR 158.065.856"
+                break
+        changed = normalize_table_currency_columns(table)
+        self.assertGreater(changed, 0)
+        self.assertEqual(_cell_text(table, 1, 1), "RON 158.065.856")
+
+    def test_suspect_currency_cell_detects_leading_dot(self) -> None:
+        self.assertTrue(_is_suspect_currency_cell("EUR .961.31"))
+
+    def test_suspect_currency_cell_accepts_grouped_number(self) -> None:
+        self.assertFalse(_is_suspect_currency_cell("EUR 6.961.310"))
+
+    def test_should_replace_numeric_cell_adds_leading_digit(self) -> None:
+        base = "RON 71.371"
+        ocr = "RON 471.371"
+        self.assertTrue(_should_replace_numeric_cell(base, ocr))
+
+    def test_should_replace_numeric_cell_rejects_mismatch(self) -> None:
+        base = "RON 71.371"
+        ocr = "RON 1.371.000"
+        self.assertFalse(_should_replace_numeric_cell(base, ocr))
+
+    def test_should_replace_numeric_cell_replaces_invalid_group(self) -> None:
+        base = "EUR .961.31"
+        ocr = "EUR 6.961.310"
+        self.assertTrue(_should_replace_numeric_cell(base, ocr))
+
+    def test_should_replace_numeric_cell_numeric_only(self) -> None:
+        base = ".961.31"
+        ocr = "6.961.310"
+        self.assertTrue(_should_replace_numeric_cell(base, ocr))
 
 
 if __name__ == "__main__":

@@ -43,11 +43,14 @@ Options
 - `--export-json` to save Docling JSON (lossless)
 - `--quiet` to reduce Docling logs
 
+Environment overrides
+- `KPI_OCR=0` to disable KPI extraction from image regions (skips the OCR-heavy pass).
+
 Notes
 - Default image mode is `placeholder` for clean RAG text. Use `referenced` to keep chart/table images.
 - PDF conversion uses a high-accuracy layout model, accurate table extraction, and filters page headers/footers.
 - Tables with header-spanned columns (e.g., currency + value pairs) are collapsed into single columns.
-- Page breaks are marked with `<!-- page break -->`, and pages are annotated with `[//]: # (page: N)`.
+- Page breaks are marked with `<!-- page break -->`, and pages are annotated with `**[Page N]**`.
 - Excess whitespace between words is normalized in non-table text.
 - CUDA builds of `torch` and `torchvision` are pinned via `pyproject.toml` using the PyTorch cu128 index.
 

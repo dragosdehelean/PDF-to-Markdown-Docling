@@ -8,7 +8,7 @@ from docling_core.types.doc.base import BoundingBox
 from docling_core.types.doc.document import DoclingDocument, ProvenanceItem
 from docling_core.types.doc.labels import DocItemLabel
 
-from date_cleanup import remove_date_only_text_inside_pictures
+from date_cleanup import remove_date_only_text_inside_pictures, remove_axis_text_inside_pictures
 
 
 def _prov(page_no: int, bbox: BoundingBox) -> ProvenanceItem:
@@ -55,6 +55,31 @@ class DateCleanupTests(unittest.TestCase):
         self.assertEqual(removed, 0)
         remaining = [item.text for item, _ in doc.iterate_items() if hasattr(item, "text")]
         self.assertIn("31.12.2024", remaining)
+
+    def test_removes_axis_text_inside_picture(self) -> None:
+        doc = DoclingDocument(name="test")
+        pic_bbox = BoundingBox(l=0, t=0, r=100, b=100)
+        doc.add_picture(prov=_prov(1, pic_bbox))
+
+        inside_bbox = BoundingBox(l=10, t=10, r=20, b=20)
+        outside_bbox = BoundingBox(l=200, t=200, r=210, b=210)
+        doc.add_text(
+            label=DocItemLabel.TEXT,
+            text="74% 9L 2025",
+            prov=_prov(1, inside_bbox),
+        )
+        doc.add_text(
+            label=DocItemLabel.TEXT,
+            text="Total active",
+            prov=_prov(1, outside_bbox),
+        )
+
+        removed = remove_axis_text_inside_pictures(doc)
+
+        self.assertEqual(removed, 1)
+        remaining = [item.text for item, _ in doc.iterate_items() if hasattr(item, "text")]
+        self.assertIn("Total active", remaining)
+        self.assertNotIn("74% 9L 2025", remaining)
 
 
 if __name__ == "__main__":

@@ -49,7 +49,7 @@ class PageAudit:
 _SPACED_TEXT_PATTERN = re.compile(r"(?:\b\w\b\s+){1,}\b\w\b", flags=re.UNICODE)
 _SPACED_DIGIT_PATTERN = re.compile(r"(?:\b\d\b\s+){3,}\b\d\b")
 _SPLIT_WORD_PATTERN = re.compile(r"\b(\w{2,})\s+(\w)\s+(\w{2,})\b", flags=re.UNICODE)
-_SPACED_NUMBER_PATTERN = re.compile(r"\d\s+[.,/]?\s*\d")
+_SPACED_NUMBER_PATTERN = re.compile(r"\d[.,/]\s+\d|\d\s+[.,/]\s*\d")
 _RUNON_LETTERS_PATTERN = re.compile(r"(?:[^\W\d_]{20,})", flags=re.UNICODE)
 _RUNON_MERGED_ALNUM_PATTERN = re.compile(
     r"(?:[^\W\d_]{6,}\d{2,}[^\W\d_]{2,}|\d{2,}[^\W\d_]{6,})",
@@ -75,8 +75,17 @@ def is_spaced_text(text: str) -> bool:
         return True
     if _SPACED_NUMBER_PATTERN.search(text):
         return True
-    if _SPACED_TEXT_PATTERN.search(text):
-        return True
+    spaced_text_matches = list(_SPACED_TEXT_PATTERN.finditer(text))
+    if spaced_text_matches:
+        for match in spaced_text_matches:
+            tokens = [tok for tok in match.group(0).split() if tok]
+            uncommon = [
+                tok
+                for tok in tokens
+                if tok.isalpha() and tok not in _COMMON_SINGLE_LETTER_WORDS
+            ]
+            if uncommon:
+                return True
     if len(text) < 6:
         return False
 
@@ -92,7 +101,7 @@ def is_spaced_text(text: str) -> bool:
     tokens = [tok for tok in text.split() if tok]
     if len(tokens) < 4:
         return False
-    single_tokens = [tok for tok in tokens if len(tok) == 1]
+    single_tokens = [tok for tok in tokens if len(tok) == 1 and tok.isalnum()]
     if (len(single_tokens) / len(tokens)) >= 0.5:
         return True
 
@@ -222,9 +231,33 @@ def _docling_table_stats(doc: DoclingDocument) -> tuple[int, int]:
     tables = []
     for item, _level in doc.iterate_items():
         if isinstance(item, TableItem):
+            if _is_toc_like_table(item):
+                continue
             tables.append(item)
     cell_count = sum(table.data.num_rows * table.data.num_cols for table in tables)
     return len(tables), cell_count
+
+
+def _is_toc_like_table(table: TableItem) -> bool:
+    if table.data.num_cols != 2 or table.data.num_rows < 6:
+        return False
+    texts = [cell.text for cell in table.data.table_cells if cell.text]
+    if not texts:
+        return False
+    digit_count = sum(ch.isdigit() for text in texts for ch in text)
+    alpha_count = sum(ch.isalpha() for text in texts for ch in text)
+    digit_ratio = digit_count / max(1, digit_count + alpha_count)
+    if digit_ratio > 0.25:
+        return False
+    numbers = _extract_numbers(" ".join(texts))
+    if not numbers:
+        return False
+    small_numbers = [
+        num for num in numbers if len(re.sub(r"\D", "", num)) <= 3
+    ]
+    if len(small_numbers) / len(numbers) < 0.7:
+        return False
+    return True
 
 
 def _docling_heading_count(doc: DoclingDocument) -> int:
@@ -261,6 +294,8 @@ def audit_doc_vs_markdown(doc: DoclingDocument, markdown: str) -> AuditMetrics:
     total_text_items = 0
     for item, _level in doc.iterate_items():
         if isinstance(item, TableItem):
+            if _is_toc_like_table(item):
+                continue
             for cell in item.data.table_cells:
                 total_cells += 1
                 if is_spaced_text(cell.text):

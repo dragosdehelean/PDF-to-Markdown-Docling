@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
@@ -33,14 +34,27 @@ from audit_utils import (
     needs_spacing_fix,
     needs_table_spacing_fix,
 )
-from date_cleanup import remove_date_only_text_inside_pictures
-from export_utils import add_visible_page_markers, reduce_markdown_noise
+from date_cleanup import (
+    remove_axis_text_inside_pictures,
+    remove_date_only_text_inside_pictures,
+)
+from picture_kpi_extract import add_picture_kpi_captions
+from export_utils import (
+    add_visible_page_markers,
+    reduce_markdown_noise,
+    normalize_kpi_blocks,
+    remove_axis_like_lines,
+    remove_orphan_headings,
+)
 from pymupdf_spacing_fix import fix_spaced_items_with_pymupdf_glyphs
 from spacing_fix import fix_spaced_items_with_word_cells
 from table_fixes import (
     collapse_document_table_groups,
     clean_document_table_cells,
+    count_suspect_table_cells,
     merge_spaced_table_cells,
+    merge_suspect_table_cells,
+    normalize_document_table_currencies,
     normalize_document_table_headers,
 )
 from whitespace_fix import normalize_document_text_whitespace
@@ -54,6 +68,45 @@ BACKEND_MAP = {
 
 PAGE_BREAK_PLACEHOLDER = "<!-- page break -->"
 SPACED_CELL_RATIO_THRESHOLD = 0.04
+ENV_FILE = Path(__file__).resolve().parent / ".env"
+ENV_KPI_OCR = "KPI_OCR"
+
+
+def _load_env_file(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key:
+            values[key] = value
+    return values
+
+
+def _parse_bool(value: Optional[str], default: bool) -> bool:
+    if value is None:
+        return default
+    norm = value.strip().lower()
+    if not norm:
+        return default
+    if norm in {"1", "true", "yes", "on"}:
+        return True
+    if norm in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
+def _kpi_ocr_enabled() -> bool:
+    value = os.environ.get(ENV_KPI_OCR)
+    if value is None or not value.strip():
+        env_values = _load_env_file(ENV_FILE)
+        value = env_values.get(ENV_KPI_OCR, "")
+    return _parse_bool(value, True)
 
 
 def parse_ocr_langs(lang: str) -> list[str]:
@@ -225,6 +278,9 @@ def convert_pdf_to_markdown(
         PAGE_BREAK_PLACEHOLDER,
         remove_image_placeholders=image_mode is ImageRefMode.PLACEHOLDER,
     )
+    markdown_text = normalize_kpi_blocks(markdown_text, PAGE_BREAK_PLACEHOLDER)
+    markdown_text = remove_orphan_headings(markdown_text, PAGE_BREAK_PLACEHOLDER)
+    markdown_text = remove_axis_like_lines(markdown_text, PAGE_BREAK_PLACEHOLDER)
     output_path.write_text(markdown_text, encoding="utf-8")
 
     return result, backend_name
@@ -369,6 +425,7 @@ def convert_pdf_to_doc(
         return pages
 
     spacing_fix = spacing_fix.lower()
+    ocr_table_doc = None
     if spacing_fix == "heuristic":
         spacing_fix = "pymupdf"
     if spacing_fix == "ocr" and metrics.total_table_cells:
@@ -419,20 +476,41 @@ def convert_pdf_to_doc(
                     f"text_items={report.text_items}, {page_info}"
                 )
 
+    suspect_cells = count_suspect_table_cells(result.document)
+    if suspect_cells:
+        if ocr_table_doc is None:
+            ocr_table_doc, _backend = run_conversion(
+                True, True, True, backend_override=backend_name
+            )
+        repaired = merge_suspect_table_cells(result.document, ocr_table_doc.document)
+        if not quiet and repaired:
+            print(f"Repaired {repaired} suspect numeric table cells via OCR.")
+
     collapsed_tables = collapse_document_table_groups(result.document)
     normalized_headers = normalize_document_table_headers(result.document)
     cleaned_cells = clean_document_table_cells(result.document)
-    normalized_text = normalize_document_text_whitespace(result.document)
+    normalized_currencies = normalize_document_table_currencies(result.document)
     removed_dates = remove_date_only_text_inside_pictures(result.document)
+    removed_axis_text = remove_axis_text_inside_pictures(result.document)
+    added_kpis = 0
+    if _kpi_ocr_enabled():
+        added_kpis = add_picture_kpi_captions(result.document, input_path)
+    normalized_text = normalize_document_text_whitespace(result.document)
     if not quiet and collapsed_tables:
         print(f"Collapsed header column groups in {collapsed_tables} tables.")
     if not quiet and normalized_headers:
         print(f"Normalized header labels in {normalized_headers} table cells.")
     if not quiet and cleaned_cells:
         print(f"Cleaned {cleaned_cells} table cell values.")
+    if not quiet and normalized_currencies:
+        print(f"Normalized currency labels in {normalized_currencies} table cells.")
     if not quiet and normalized_text:
         print(f"Normalized whitespace in {normalized_text} text items.")
     if not quiet and removed_dates:
         print(f"Removed {removed_dates} date-only text items inside images.")
+    if not quiet and removed_axis_text:
+        print(f"Removed {removed_axis_text} axis-like text items inside images.")
+    if not quiet and added_kpis:
+        print(f"Added {added_kpis} KPI captions from images.")
 
     return result, backend_name, export_labels

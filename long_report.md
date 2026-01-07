@@ -14,37 +14,28 @@ Evoluția estimată a rezultatelor pentru trimestrul IV reflectă o profitabilit
 
 Întrucât producția vegetală este înregistrată inițial la cost standard, iar în ultimul trimestru al anului calculăm costul efectiv (real), diferențele dintre cele două valori (favorabile sau nefavorabile) se regularizează la sfârșitul perioadei. Aceste diferențe de cost vor influența rezultatul exercițiului, fie prin majorarea, fie prin diminuarea acestuia, în funcție de sensul abaterii dintre costul standard și cel real.
 
+CIFRĂ DE AFACERI RON 158,06 MIL. (EUR 31,08 MIL.) +24,66% vs 9L 2024
 
-ACTIVE CIRCULANTE
+ACTIVE CIRCULANTE RON 132,07 MIL. (EUR 25,99 MIL.) +14,07% vs 31.12.2024
 
-RON 132,07 MIL. (EUR 25,99 MIL.)
+ACTIVE IMOBILIZATE 281,77 MIL. RON (EUR 55,45 MIL.) +15,71% vs 31.12.2024
 
-+14,07% vs 31.12.2024
+IMOBILIZĂRI NECORPORALE RON 2,73 MIL. (EUR 0,53 MIL.) -42,44% vs 31.12.2024
 
-ACTIVE IMOBILIZATE
+PROFIT NET RON 42,92 MIL. (EUR 8,45 MIL.) +103,61% vs 9L 2024
 
-281,77 MIL.
-
-RON (EUR 55,45 MIL.) +15,71% vs 31.12.2024
-
+ACTIVE TOTALE RON 418,24 MIL. (EUR 82,31 MIL.) +15,64% vs 31.12.2024
 
 
-
-ACTIVE TOTALE
-
-RON 418,24 MIL. (EUR 82,31 MIL.)
-
-+15,64% vs 31.12.2024
 
 
 <!-- page break -->
 
 
 
+
+
 **[Page 2]**
-
-
-## Analiza rezultatelor financiare
 
 Analiza contului de profit și pierdere la nivel consolidat
 
@@ -76,9 +67,9 @@ Analiza contului de profit și pierdere la nivel consolidat
 
 
 
-**[Page 3]**
 
-## Analiza rezultatelor financiare
+
+**[Page 3]**
 
 ## Analiza contului de profit și pierdere la nivel consolidat
 
@@ -88,6 +79,7 @@ Analiza contului de profit și pierdere la nivel consolidat
 
 Subvențiile primite prin APIA sunt acordate pentru terenurile agricole și producția de lapte crud. Subvențiile se acordă în funcție de numărul de animale deținute și de suprafața de teren folosită, în baza cererilor formulate de companie.
 
+Profitul Net al companiei DN AGRAR a înregistrat o creștere de 103,61% de la RON 21,08 mil., la RON 42,92 mil..
 
 | Contul de profit și pierdere          | 30/09/2025      | 30/09/2024      | 30/09/2025      | 30/09/2024      | Δ%      |
 |---------------------------------------|-----------------|-----------------|-----------------|-----------------|---------|
@@ -108,9 +100,9 @@ Subvențiile primite prin APIA sunt acordate pentru terenurile agricole și prod
 
 
 
-**[Page 4]**
 
-## Analiza rezultatelor financiare
+
+**[Page 4]**
 
 ## Analiza contului de profit și pierdere la nivel consolidat
 
@@ -124,21 +116,16 @@ Pentru anul 2025, în noul PNRR aferent perioadei 2023-2027 a fost modificată �
 
 De asemenea, în ceea ce privește subvențiile acordate pentru cantitatea de lapte, DN AGRAR are eligible peste 10.000 de tone de lapte produse peste referința anului 2018, pentru care însă nu încasează subvențiile cuvenite. Astfel, grupul DN AGRAR nu încasează aproximativ 500.000 euro, ca urmare a faptului că anul de referință nu a fost actualizat.
 
-
-## Profit din exploatare
-
-
-
+Rezultatul operațional al grupului DN AGRAR a crescut de la RON 31,55 mil. la RON 59,56 mil., o creștere cu 88,83%.
 
 
 <!-- page break -->
 
 
 
+
+
 **[Page 5]**
-
-
-## Analiza rezultatelor financiare
 
 Analiza contului de profit și pierdere la nivel consolidat
 
@@ -158,20 +145,16 @@ Cheltuielile cu personalul au crescut până la suma de 26 milioane RON, o major
 
 Cheltuielile cu dobânzile au înregistrat o diminuare de 26% în primele nouă luni ale anului curent, comparativ cu primele nouă luni din 2024. Această evoluție se datorează în principal scăderii ratei dobânzii aplicate de instituția bancară, cât și rambursării unor împrumuturi de către societate.
 
-
-## Rezultatul brut
-
-
+DN AGRAR Group a raportat un profit brut de 52 milioane RON în primele nouă luni ale anului 2025, în creștere cu 100% față de rezultatul înregistrat în aceeași perioadă a anului 2024.
 
 
 <!-- page break -->
 
 
 
+
+
 **[Page 6]**
-
-
-## Analiza rezultatelor financiare
 
 ## Analiza contului de profit și pierdere la nivel consolidat
 
@@ -180,7 +163,7 @@ Cheltuielile cu dobânzile au înregistrat o diminuare de 26% în primele nouă 
 | Cifra de afaceri netă                                                     | RON 158.065.856 | RON 126.792.531 | EUR 31.108.590 | EUR 24.953.756 | 24,66%  |
 | 1. Producția vândută                                                      | RON 151.477.696 | RON 126.149.782 | EUR 29.811.989 | EUR 24.827.258 | 20,08%  |
 | Venituri din vânzarea mărfurilor                                          | RON 6.588.161   | RON 642.749     | EUR 1.296.601  | EUR 126.498    | 925,00% |
-| Sold C                                                                    | RON 45.533.315  | RON 35.301.082  | EUR .961.31    | EUR 6.947.528  | 28,99%  |
+| Sold C                                                                    | RON 45.533.315  | RON 35.301.082  | EUR 8.961.310  | EUR 6.947.528  | 28,99%  |
 | 3. Venituri din producția de imobilizări necorporale și corporale         | RON 17.419.497  | RON 14.001.536  | EUR 3.428.292  | EUR 2.755.611  | 24,41%  |
 | 6. Venituri din subvenții de exploatare                                   | RON 21.640.800  | RON 16.919.070  | EUR 4.259.078  | EUR 3.329.805  | 27,91%  |
 | 7. Alte venituri din exploatare                                           | RON 2.481.513   | RON 477.816     | EUR 488.381    | EUR 94.038     | 419,34% |
@@ -197,14 +180,14 @@ Cheltuielile cu dobânzile au înregistrat o diminuare de 26% în primele nouă 
 
 
 
+
 <!-- page break -->
 
 
 
+
+
 **[Page 7]**
-
-
-## Analiza rezultatelor financiare
 
 Analiza contului de profit și pierdere la nivel consolidat
 
@@ -213,13 +196,13 @@ Analiza contului de profit și pierdere la nivel consolidat
 | a. 1) Cheltuieli de exploatare privind amortizarea imobilizărilor                                                                                                 | RON 21.533.753  | RON 18.612.447  | EUR 4.238.010  | EUR 3.663.074  | 15,70%   |
 | a.3) Venituri                                                                                                                                                     | RON (719)       | RON (719)       | EUR (142)      | EUR (142)      | 0,00%    |
 | b) Ajustări de valoare privind activele circulante                                                                                                                | RON (25.604)    | RON (135.452)   | EUR (5.039)    | EUR (26.658)   | -81,10%  |
-| b.1) Cheltuieli                                                                                                                                                   | RON 119.477     | RON 135.452     | EUR 23.514     | EUR 26.658     | -11,79%  |
+| b.1) Cheltuieli                                                                                                                                                   | RON 119.477     | RON 135.452     | EUR 23.514     | EUR 6.658      | -11,79%  |
 | b.2) Venituri                                                                                                                                                     | RON (145.081)   | -               | EUR (28.553)   | -              | -        |
 | 11. Alte cheltuieli de exploatare                                                                                                                                 | RON 30.348.562  | RON 29.321.265  | EUR 5.972.833  | EUR 5.770.653  | 3,50%    |
-| 11.1. Cheltuieli privind prestațiile externe                                                                                                                      | RON 21.303.004  | RON 19.913.865  | EUR 4.192.597  | EUR 3.919.204  | 6,98%    |
+| 11.1. Cheltuieli privind prestațiile externe                                                                                                                      | RON 1.303.      | RON 19.913.865  | EUR 4.192.597  | EUR 3.919.204  | 6,98%    |
 | 11.2. Cheltuieli cu redevențele, locațiile de gestiune și chiriile                                                                                                | RON 6.168.112   | RON 5.907.226   | EUR 1.213.932  | EUR 1.162.588  | 4,42%    |
 | 11.4. Cheltuieli de management                                                                                                                                    | RON 1.420.489   | RON 1.495.100   | EUR 279.563    | EUR 294.247    | -4,99%   |
-| 11.5. Cheltuieli de consultanță                                                                                                                                   | RON 326.439     | RON 206.694     | EUR 64.246     | EUR 40.679     | 57,93%   |
+| 11.5. Cheltuieli de consultanță                                                                                                                                   | RON 326.439     | RON 6.694       | EUR 64.246     | EUR 40.679     | 57,93%   |
 | 11.6. Cheltuieli cu alte impozite, texe și vărsăminte asimilate, cheltuieli reprezentând transferuri și contribuții datorate în baza unor acte normative speciale | RON 873.270     | RON 602.976     | EUR 171.866    | EUR 118.670    | 44,83%   |
 | 11.10. Alte cheltuieli                                                                                                                                            | RON 257.248     | RON 1.195.404   | EUR 50.628     | EUR 235.265    | -78,48%  |
 | Ajustări privind provizioanele                                                                                                                                    | RON (375.998)   | RON 369.076     | EUR (73.999)   | EUR 72.637     | -201,88% |
@@ -230,21 +213,21 @@ Analiza contului de profit și pierdere la nivel consolidat
 
 
 
+
 <!-- page break -->
 
 
 
+
+
 **[Page 8]**
-
-
-## Analiza rezultatelor financiare
 
 Analiza contului de profit și pierdere la nivel consolidat
 
 | Indicatori                                                 | 30/09/2025      | 30/09/2024      | 30/09/2025      | 30/09/2024      | Δ%      |
 |------------------------------------------------------------|-----------------|-----------------|-----------------|-----------------|---------|
 | 13. Venituri din dobânzi                                   | RON 865         | RON 2.892       | EUR 170         | EUR 569         | -70,09% |
-| 15. Alte venituri financiare                               | RON 71.371      | RON 861.983     | EUR 92.769      | EUR 169.645     | -45,32% |
+| 15. Alte venituri financiare                               | RON 471.371     | RON 861.983     | EUR 92.769      | EUR 169.645     | -45,32% |
 | Venituri financiare - total                                | RON 472.236     | RON 864.875     | EUR 92.940      | EUR 170.214     | -45,40% |
 | 17. Cheltuieli privind dobânzile                           | RON 4.086.076   | RON 5.558.430   | EUR 804.172     | EUR 1.093.942   | -26,49% |
 | 18. Alte cheltuieli financiare                             | RON 4.158.399   | RON 998.558     | EUR 818.405     | EUR 196.524     | 316,44% |
@@ -259,14 +242,14 @@ Analiza contului de profit și pierdere la nivel consolidat
 
 
 
+
 <!-- page break -->
 
 
 
+
+
 **[Page 9]**
-
-
-## Analiza rezultatelor financiare
 
 ## Analiza bilanțului la nivel consolidat
 
@@ -279,17 +262,19 @@ La finele lunii septembrie 2025, activele totale ale companiei au înregistrat u
 | ACTIVE IMOBILIZATE - TOTAL                                             | RON 281.775.783 | RON 243.511.009 | EUR 55.455.666 | EUR 47.924.860 | 15,71%  |
 | ACTIVE CIRCULANTE - TOTAL                                              | RON 132.075.857 | RON 115.784.991 | EUR 25.993.556 | EUR 22.787.387 | 14,07%  |
 | CHELTUIELI ÎN AVANS                                                    | RON 4.393.280   | RON 2.369.930   | EUR 864.632    | EUR 466.421    | 85,38%  |
-| TOTAL ACTIVE                                                           | EUR 418.244.920 | EUR 361.665.930 | EUR 82.313.853 | EUR 71.178.668 | 15,64%  |
+| TOTAL ACTIVE                                                           | RON 418.244.920 | RON 361.665.930 | EUR 82.313.853 | EUR 71.178.668 | 15,64%  |
 | DATORII: SUMELE CARE TREBUIE PLĂTITE ÎNTR-O PERIOADĂ DE PÂNĂ LA UN AN  | RON 78.947.449  | RON 84.138.725  | EUR 15.537.472 | EUR 16.559.155 | -6,17%  |
 | DATORII: SUMELE CARE TREBUIE PLĂTITE ÎNTR-O PERIOADĂ MAI MARE DE UN AN | RON 129.452.993 | RON 110.433.346 | EUR 25.477.356 | EUR 21.734.141 | 17,22%  |
-| DATORII - TOTAL                                                        | EUR 208.400.443 | EUR 194.572.071 | EUR 41.014.828 | EUR 38.293.297 | 7,11%   |
+| DATORII - TOTAL                                                        | RON 208.400.443 | RON 194.572.071 | EUR 41.014.828 | EUR 38.293.297 | 7,11%   |
 | PROVIZIOANE                                                            | RON 9.628       | RON 386.046     | EUR 1.895      | EUR 75.977     | -97,51% |
 | VENITURI ÎN AVANS                                                      | RON 1.623.305   | RON 1.727.746   | EUR 319.479    | EUR 340.034    | -6,04%  |
 | CAPITALURI PROPRII - TOTAL                                             | RON 208.211.545 | RON 164.980.067 | EUR 40.977.651 | EUR 32.469.360 | 26,20%  |
 | TOTAL CAPITALURI PROPRII și DATORII                                    | RON 418.244.920 | RON 361.665.930 | EUR 82.313.853 | EUR 71.178.668 | 15,64%  |
 
-
 ## Capitaluri Proprii
+
+31.12.2024 50 0 300 250 200 150 100 RON 30.09.202 mil.
+
 
 
 
@@ -297,10 +282,9 @@ La finele lunii septembrie 2025, activele totale ale companiei au înregistrat u
 
 
 
+
+
 **[Page 10]**
-
-
-## Analiza rezultatelor financiare
 
 ## Analiza bilanțului la nivel consolidat
 
@@ -318,10 +302,9 @@ La finele lunii septembrie 2025, activele totale ale companiei au înregistrat u
 
 
 
+
+
 **[Page 11]**
-
-
-## Analiza rezultatelor financiare
 
 ## Analiza bilanțului la nivel consolidat
 
@@ -346,8 +329,10 @@ Scăderea datoriilor pe termen scurt este determinată în principal de rambursa
 | Alte datorii pe termen scurt, alte taxe și impozite    | RON 96.518     | RON 150.146    | EUR 18.995     | EUR 29.550     | -35,72% |
 | Total                                                  | RON 78.947.449 | RON 84.138.725 | EUR 15.537.472 | EUR 16.559.155 | -6,17%  |
 
-
 ## Datorii pe termen scurt
+
+20 0 120 100 80 60 RON 40 mil. 31.12.2024 30.09.2025
+
 
 
 
@@ -355,13 +340,11 @@ Scăderea datoriilor pe termen scurt este determinată în principal de rambursa
 
 
 
+
+
 **[Page 12]**
 
-
-## Analiza rezultatelor financiare
-
 ## Analiza bilanțului la nivel consolidat
-
 
 | Datorii pe termen lung                                 | 30/09/2025      | 31/12/2024      | 30/09/2025     | 31/12/2024     | Δ%       |
 |--------------------------------------------------------|-----------------|-----------------|----------------|----------------|----------|
@@ -375,8 +358,10 @@ Scăderea datoriilor pe termen scurt este determinată în principal de rambursa
 | Impozit amânat                                         | RON 6.885.000   | RON 7.200.000   | EUR 1.355.022  | EUR 1.417.016  | -4,37%   |
 | Total                                                  | RON 129.452.993 | RON 110.433.346 | EUR 25.477.356 | EUR 21.734.141 | 17,22%   |
 
-
 ## Datorii pe termen lung
+
+20 0 120 100 80 60 RON 40 mil. 31.12.2024 30.09.2025
+
 
 
 
@@ -384,14 +369,15 @@ Scăderea datoriilor pe termen scurt este determinată în principal de rambursa
 
 
 
+
+
 **[Page 13]**
-
-
-## Analiza rezultatelor financiare
 
 Analiza bilanțului la nivel consolidat
 
+Capitalurile proprii au înregistrat o creștere de 26% față de 31.12.2024, ajungând la 208 milioane RON, această majorare fiind determinată de înregistrarea unui profit net de 43 milioane RON la sfârșitul lunii septembrie 2025.
 
+Total capitaluri proprii și datorii 15,64% vs. 31.12.2024
 
 | Indicatori de bilanț                                                   | 30/09/2025      | 31/12/2024      | 30/09/2025     | 31/12/2024     | Δ%      |
 |------------------------------------------------------------------------|-----------------|-----------------|----------------|----------------|---------|
@@ -403,6 +389,8 @@ Analiza bilanțului la nivel consolidat
 | Capitaluri proprii - total                                             | RON 208.211.545 | RON 164.980.067 | EUR 40.977.651 | EUR 32.469.360 | 26,20%  |
 | Total capitaluri proprii și datorii                                    | RON 418.244.920 | RON 361.665.930 | EUR 82.313.853 | EUR 71.178.668 | 15,64%  |
 
+Datorii totale 40 0 240 200 160 120 RON 80 mil. 31.12.2024 30.09.2025
+
 
 
 
@@ -410,10 +398,9 @@ Analiza bilanțului la nivel consolidat
 
 
 
+
+
 **[Page 14]**
-
-
-## Analiza rezultatelor financiare
 
 ## Analiza bilanțului la nivel consolidat
 
@@ -428,7 +415,7 @@ Analiza bilanțului la nivel consolidat
 | IV. Casa și conturi la bănci                                           | RON 1.512.757   | RON 7.613.174   | EUR 297.722    | EUR 1.498.332  | -80,13% |
 | Active circulante - total                                              | RON 132.075.857 | RON 115.784.991 | EUR 25.993.556 | EUR 22.787.387 | 14,07%  |
 | Cheltuieli în avans                                                    | RON 4.393.280   | RON 2.369.930   | EUR 864.632    | EUR 466.421    | 85,38%  |
-| Sume de reluat într-o perioadă de până la un an                        | RON 2.549.341   | RON 949.819     | EUR 501.730    | EUR 186.932    | 168,40% |
+| Sume de reluat într-o perioadă de până la un an                        | RON .549.341    | RON 949.819     | EUR 501.730    | EUR 186.932    | 168,40% |
 | Sume de reluat într-o perioadă mai mare de un an                       | RON 1.843.939   | RON 1.420.111   | EUR 362.902    | EUR 279.489    | 29,84%  |
 | Datorii: Sumele care trebuie plătite într-o perioadă de până la un an  | RON 78.947.449  | RON 84.138.725  | EUR 15.537.472 | EUR 16.559.155 | -6,17%  |
 | Active circulante nete/ Datorii curente nete                           | RON 55.538.494  | RON 32.456.831  | EUR 10.930.408 | EUR 6.387.757  | 71,11%  |
@@ -439,14 +426,14 @@ Analiza bilanțului la nivel consolidat
 
 
 
+
 <!-- page break -->
 
 
 
+
+
 **[Page 15]**
-
-
-## Analiza rezultatelor financiare
 
 ## Analiza bilanțului la nivel consolidat
 
@@ -462,7 +449,7 @@ Analiza bilanțului la nivel consolidat
 | III. Rezerve din reevaluare (ct.105)                       | RON 31.349.067  | RON 31.602.381  | EUR 6.169.740  | EUR 6.219.594  | -0,80%   |
 | IV. Rezerve                                                | RON 1.512.634   | RON 1.512.634   | EUR 297.698    | EUR 297.698    | 0,00%    |
 | Acţiuni proprii (ct 109)                                   | RON (65.280)    | RON (65.280)    | EUR (12.848)   | EUR (12.848)   | 0,00%    |
-| Pierderi legate de instrumentele de capitaluri proprii     | RON (200.001)   | RON (200.001)   | EUR (39.362)   | EUR (39.362)   | 0,00%    |
+| Pierderi legate de instrumentele de capitaluri proprii     | RON (200.001)   | RON (200.001)   | EUR (39.362)   | EUR (39.362    | 0,00%    |
 | V. Profitul sau pierderea reportat(ă) - SOLD C             | RON 99.230.798  | RON 67.941.780  | EUR 19.529.393 | EUR 13.371.471 | 46,05%   |
 | VI. Profitul sau pierderea exercițiului financiar - SOLD C | RON 42.916.476  | RON 31.740.124  | EUR 8.446.296  | EUR 6.246.703  | 35,21%   |
 | Repartizarea profitului                                    | - RON           | RON (704.421)   | - EUR          | EUR (138.636)  | -100,00% |
@@ -470,32 +457,26 @@ Analiza bilanțului la nivel consolidat
 
 
 
+
 <!-- page break -->
+
+
 
 
 
 **[Page 16]**
 
-
-## Analiza rezultatelor financiare
-
 ## Indicatori financiari la nivel consolidat
 
-| Indicatorul lichidității curente   | 30/09/2025      | 31/12/2024        | 31/12/2023     | 31/12/2022     | 31/12/2021     | 31/12/2020     |
-|------------------------------------|-----------------|-------------------|----------------|----------------|----------------|----------------|
-| Active curente (A)                 | RON 132.075.857 | 115.784.991 RON 7 | RON 94.362.606 | RON 72.472.451 | RON 49.426.260 | RON 22.362.883 |
-| Datorii curente (B)                | RON 78.947.449  | RON 84.138.725    | RON 76.397.539 | RON 59.675.569 | RON 41.793.980 | RON 23.430.660 |
-| A/ B                               | 1,67            | 1,38              | 1,24           | 1,21           | 1,18           | 0,95           |
-| Indicatorul lichidității curente   | 30/09/2025      | 31/12/2024        | 31/12/2023     | 31/12/2022     | 31/12/2021     | 31/12/2020     |
-| Active curente (A)                 | EUR 25.993.556  | 6 EUR 22.787.387  | EUR 18.571.295 | EUR 14.263.142 | EUR 9.727.472  | EUR 4.401.189  |
-| Datorii curente (B)                | EUR 15.537.472  | EUR 16.559.155    | EUR 15.035.630 | EUR 11.744.616 | EUR 8.225.380  | EUR 4.611.336  |
-| A/ B                               | 1,67            | 1,38              | 1,24           | 1,21           | 1,18           | 0,95           |
-
-
-
-
-
-
+| Indicatorul lichidității curente   | 30/09/2025      | 31/12/2024      | 31/12/2023     | 31/12/2022     | 31/12/2021     | 31/12/2020     |
+|------------------------------------|-----------------|-----------------|----------------|----------------|----------------|----------------|
+| Active curente (A)                 | RON 132.075.857 | RON 115.784.991 | RON 94.362.606 | RON 72.472.451 | RON 49.426.260 | RON 22.362.883 |
+| Datorii curente (B)                | RON 78.947.449  | RON 84.138.725  | RON 76.397.539 | RON 59.675.569 | RON 41.793.980 | RON 23.430.660 |
+| A/ B                               | 1,67            | 1,38            | 1,24           | 1,21           | 1,18           | 0,95           |
+| Indicatorul lichidității curente   | 30/09/2025      | 31/12/2024      | 31/12/2023     | 31/12/2022     | 31/12/2021     | 31/12/2020     |
+| Active curente (A)                 | EUR 25.993.556  | EUR 22.787.387  | EUR 18.571.295 | EUR 14.263.142 | EUR 9.727.472  | EUR 4.401.189  |
+| Datorii curente (B)                | EUR 15.537.472  | EUR 16.559.155  | EUR 15.035.630 | EUR 11.744.616 | EUR 8.225.380  | EUR 4.611.336  |
+| A/ B                               | 1,67            | 1,38            | 1,24           | 1,21           | 1,18           | 0,95           |
 
 
 
@@ -504,10 +485,9 @@ Analiza bilanțului la nivel consolidat
 
 
 
+
+
 **[Page 17]**
-
-
-## Analiza rezultatelor financiare
 
 ## Indicatori financiari la nivel consolidat
 
@@ -515,53 +495,42 @@ Analiza bilanțului la nivel consolidat
 |------------------------|-----------------|-----------------|-----------------|-----------------|----------------|----------------|
 | Capital împrumutat (A) | RON 153.689.723 | RON 139.369.058 | RON 121.683.021 | RON 126.397.863 | RON 51.691.514 | RON 26.614.807 |
 | Capital propriu (B)    | RON 208.211.545 | RON 164.980.067 | RON 133.339.798 | RON 79.661.430  | RON 65.458.018 | RON 29.844.190 |
-| A/ B                   | 74%             | 84%             | 91%             | 159%            | 79%            | 89%            |
+| A/ B                   | 74% 74%         | 84%             | 91%             | 159%            | 79%            | 89%            |
 | Gradul de îndatorare   | 30/09/2025      | 31/12/2024      | 31/12/2023      | 31/12/2022      | 31/12/2021     | 31/12/2020     |
 | Capital împrumutat (A) | EUR 30.247.333  | EUR 27.428.915  | EUR 23.948.165  | EUR 24.876.083  | EUR 10.173.292 | EUR 5.238.001  |
 | Capital propriu (B)    | EUR 40.977.651  | EUR 32.469.360  | EUR 26.242.309  | EUR 15.677.989  | EUR 12.882.647 | EUR 5.873.569  |
 | A/ B                   | 74%             | 84%             | 91%             | 159%            | 79%            | 89%            |
 
-
-
-
-
+Gradul de îndatorare CREDITE PESTE 1 AN CAPITAL PROPRIU A/B
 
 
 
 
 
 <!-- page break -->
+
+
 
 
 
 **[Page 18]**
 
-
-## Analiza rezultatelor financiare
-
 ## Indicatori financiari la nivel consolidat
 
-| Gradul de îndatorare   | 30/09/2025      | 31/12/2024       | 31/12/2023      | 31/12/2022      | 31/12/2021      | 31/12/2020     |
-|------------------------|-----------------|------------------|-----------------|-----------------|-----------------|----------------|
-| Capital împrumutat (A) | RON 153.689.723 | RON 139.369.058  | RON 121.683.021 | RON 126.397.863 | RON 51.691.514  | RON 26.614.807 |
-| Capital angajat (B )   | RON 361.901.268 | 8 RON304.349.125 | RON 255.022.819 | RON 206.059.293 | RON 117.149.532 | RON 56.458.997 |
-| A/ B                   | 42%             | 46%              | 48%             | 61%             | 44%             | 47%            |
-| Gradul de îndatorare   | 30/09/2025      | 31/12/2024       | 31/12/2023      | 31/12/2022      | 31/12/2021      | 31/12/2020     |
-| Capital împrumutat (A) | EUR 30.247.333  | EUR 27.428.915   | EUR 23.948.165  | EUR 24.876.083  | EUR 10.173.292  | EUR 5.238.001  |
-| Capital angajat (B )   | EUR 71.224.984  | EUR 59.898.275   | EUR 50.190.474  | EUR 40.554.072  | EUR 23.055.939  | EUR 11.111.570 |
-| A/ B                   | 42%             | 46%              | 48%             | 61%             | 44%             | 47%            |
+| Gradul de îndatorare   | 30/09/2025      | 31/12/2024      | 31/12/2023      | 31/12/2022      | 31/12/2021      | 31/12/2020     |
+|------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|----------------|
+| Capital împrumutat (A) | RON 153.689.723 | RON 139.369.058 | RON 121.683.021 | RON 126.397.863 | RON 51.691.514  | RON 26.614.807 |
+| Capital angajat (B )   | RON 361.901.268 | RON 304.349.125 | RON 255.022.819 | RON 206.059.293 | RON 117.149.532 | RON 56.458.997 |
+| A/ B                   | 42%             | 46%             | 48%             | 61%             | 44%             | 47%            |
+| Gradul de îndatorare   | 30/09/2025      | 31/12/2024      | 31/12/2023      | 31/12/2022      | 31/12/2021      | 31/12/2020     |
+| Capital împrumutat (A) | EUR 30.247.333  | EUR 27.428.915  | EUR 23.948.165  | EUR 24.876.083  | EUR 10.173.292  | EUR 5.238.001  |
+| Capital angajat (B )   | EUR 71.224.984  | EUR 59.898.275  | EUR 50.190.474  | EUR 40.554.072  | EUR 23.055.939  | EUR 11.111.570 |
+| A/ B                   | 42%             | 46%             | 48%             | 61%             | 44%             | 47%            |
+
+Gradul de îndatorare CREDITE PESTE 1 AN CAPITAL ÎMPRUMUTAT + CAPITAL PROPRIU A/B
 
 
 
-
-48%
-
-2023
-
-
-
-
-9L 2025
 
 
 
@@ -569,10 +538,9 @@ Analiza bilanțului la nivel consolidat
 
 
 
+
+
 **[Page 19]**
-
-
-## Analiza rezultatelor financiare
 
 ## Indicatori financiari la nivel consolidat
 
@@ -585,9 +553,3 @@ Analiza bilanțului la nivel consolidat
 | Cifra de afaceri (A)                        | EUR 31.108.590  | EUR 24.953.756  | EUR 22.826.440  | EUR 20.315.967  | EUR 6.320.199  |
 | Active imobilizante (B)                     | EUR 55.455.666  | EUR 46.358.871  | EUR 33.470.049  | EUR 29.931.403  | EUR 17.497.563 |
 | A/ B                                        | 0,56            | 0,54            | 0,68            | 0,68            | 0,36           |
-
-
-
-
-
-

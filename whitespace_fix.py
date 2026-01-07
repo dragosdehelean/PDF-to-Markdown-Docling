@@ -9,11 +9,15 @@ from docling_core.types.doc import TableItem
 from text_normalize import normalize_ligatures, normalize_mojibake_text
 
 _MULTI_SPACE_BETWEEN_TOKENS = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
+_TRAILING_RATIO_PATTERN = re.compile(r"\b([A-Z])\s+([A-Z])\b$")
 
 
 def normalize_text_whitespace(text: str) -> str:
     """Collapse repeated spaces/tabs between non-whitespace tokens."""
-    return _MULTI_SPACE_BETWEEN_TOKENS.sub(" ", text)
+    normalized = _MULTI_SPACE_BETWEEN_TOKENS.sub(" ", text)
+    # Restore ratio notation when OCR drops the slash (e.g., "A B" -> "A/B").
+    normalized = _TRAILING_RATIO_PATTERN.sub(r"\1/\2", normalized)
+    return normalized
 
 
 def normalize_document_text_whitespace(doc) -> int:

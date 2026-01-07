@@ -48,6 +48,16 @@ class WhitespaceFixTests(unittest.TestCase):
         # Assert
         self.assertEqual(result, "foo  ")
 
+    def test_restores_trailing_ratio_marker(self) -> None:
+        # Arrange
+        value = "Gradul de indatorare A B"
+
+        # Act
+        result = normalize_text_whitespace(value)
+
+        # Assert
+        self.assertEqual(result, "Gradul de indatorare A/B")
+
 
 if __name__ == "__main__":
     unittest.main()
