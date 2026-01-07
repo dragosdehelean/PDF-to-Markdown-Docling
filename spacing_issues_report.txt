@@ -1,0 +1,34 @@
+Spacing issues report
+PDF: D:\Programming\Playground AI\PDF-to-Markdown-Docling\long_report.pdf
+Backend: docling-parse-v4
+Table spaced cells: 5
+Text items needing spacing fix: 20
+
+Table cell issues:
+page=14 table=11 row=14 col=2 text='RON    2 277.387.950'
+page=15 table=12 row=13 col=1 text='RON      42 42.916.476'
+page=17 table=14 row=3 col=2 text='84 % 84 %'
+page=19 table=16 row=0 col=0 text='Vi t e z a de ro t a ț ie a a ct i v e l or i m obi l i z a t e'
+page=19 table=16 row=4 col=0 text='Vi t e z a de ro t a ț ie a a ct i v e l or i m obi l i z a t e'
+
+Text item issues:
+page=1 label=text text='DN AGRAR Group a înregistrat în primele nouă luni ale anului 2025 o cifră de afaceri de 158 milioane RON în creștere cu 25% comparativ cu anul 2024, și un profit net de 43 milio...'
+page=1 label=text text='Compania a înregistrat un avans al producției de lapte de 11% în primele noua  luni  ale  anului  2025,  comparativ  cu  perioada  similară  din  2024. Această performanță este ...'
+page=1 label=text text='Ambele evoluții, atât creșterea volumului producției de lapte, cât și cea a prețului  mediu  de  vânzare,  au  avut  un  impact  direct  și  pozitiv  asupra rezultatelor financi...'
+page=1 label=text text='Evoluția estimată a rezultatelor pentru trimestrul IV reflectă o profitabilitate pozitivă, însă la un nivel mai redus comparativ cu trimestrele precedente.  Principalii  factori...'
+page=3 label=text text='În luna mai 2025, a avut loc fuziunea prin absorbție a societății DN AGRAR Holding de către DN AGRAR Apold. În urma acestei acțiuni, la data de 30 septembrie a.c. grupul DN AGRA...'
+page=3 label=text text='În perioada analizata, veniturile din exploatare au fost de 245 milioane RON, în creștere cu 27% față de aceeași perioadă a anului trecut. Veniturile din producția vândută  au  ...'
+page=4 label=text text='Subvențiile cuvenite în 2025 pentru animale iau în calcul un număr de bovine de  lapte  mai  mare  cu  1.000  capete  ca urmare a operaționalizării noii ferme DN AGRAR Straja în...'
+page=4 label=text text='Pentru  anul  2025,  în  noul  PNRR  aferent perioadei  2023-2027  a  fost  modificată  și subvenția  pentru  bunăstarea  bovinelor  de lapte  în  cuantum  de  174  de  euro/cap...'
+page=4 label=text text='În  contextul  dezvoltării  continue  a  grupului  DN AGRAR,  referitor la subvențiile  acordate  pentru animalele  deținute,  în  prezent  un  număr  de  13.501 animale îndepli...'
+page=4 label=text text='De asemenea, în ceea ce privește subvențiile acordate pentru cantitatea de lapte, DN AGRAR are eligible peste 10.000 de tone de lapte produse peste referința anului 2018, pentru...'
+page=5 label=text text='Veniturile aferente producției de imobilizări corporale au crescut cu 24%, ajungând la 17 milioane RON, drept urmare a înregistrării ca mijloace fixe a tineretului de vaci de la...'
+page=5 label=text text='Cheltuielile  din  exploatare  au  crescut  cu 15% în primele nouă  luni ale anului 2025 comparativ cu aceeași perioadă a anului 2024, ajungând  la 186  milioane  RON. Avansul c...'
+page=5 label=text text='Cheltuielile cu ajustările de valoare privind imobilizările  corporale  și  necorporale au avut de asemenea un impact asupra cheltuielilor de exploatare. Acestea au ajuns la 22 ...'
+page=5 label=text text='În primele nouă luni ale anului 2025, compania a înregistrat și o majorare cu 23% a cheltuielilor cu  utilitățile, ca  urmare  a creșterii  prețului  la  energie  electrică,  câ...'
+page=5 label=text text='Cheltuielile cu personalul au crescut până la suma  de  26  milioane  RON,  o  majorare  cu 27% față de primele nouă luni ale anului 2024. La finalul lunii septembrie 2025, DN A...'
+page=5 label=text text='În primele nouă luni ale anului 2025, rezultatul operațional al grupului DN AGRAR  a  înregistrat  o  creștere  de  89%, ajungând la 60 milioane RON.'
+page=5 label=text text='În anul 2025 s-a reintrodus impozitul pe construcții  speciale,  în  cuantum  de  0,5%  din valoarea construcțiilor, ceea ce a influențat, în parte, creșterea cheltuielilor cu a...'
+page=5 label=text text='Cheltuielile  cu  dobânzile  au  înregistrat  o diminuare  de  26% în  primele  nouă  luni  ale anului curent, comparativ cu primele nouă luni din  2024.  Această  evoluție  se ...'
+page=9 label=text text='La finele lunii septembrie 2025, activele totale ale companiei au înregistrat un avans de 16%, ajungând la 418 milioane RON. Din  această  sumă,  cea  mai  mare  pondere  o  rep...'
+page=11 label=text text='Scăderea datoriilor pe termen scurt este determinată în principal de rambursarea parțială a  creditelor  bancare,  dar  și  datorită  reducerii  obligațiilor  comerciale.  Aceas...'
