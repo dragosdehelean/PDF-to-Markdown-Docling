@@ -10,8 +10,8 @@ from docling_core.types.doc import TableItem
 from docling_core.types.doc.base import BoundingBox
 from docling_core.types.doc.document import TableCell
 
-from audit_utils import is_spaced_text
-from text_normalize import normalize_ligatures, normalize_mojibake_text
+from pdf_to_markdown_docling.audit_utils import is_spaced_text
+from pdf_to_markdown_docling.text_normalize import normalize_ligatures, normalize_mojibake_text
 
 _DATE_PATTERN = re.compile(r"\d{1,2}[./-]\d{1,2}[./-]\d{2,4}")
 _DATE_FUZZY_PATTERN = re.compile(r"\d{1,3}[./-]\d{1,2}[./-]\d{2,4}")

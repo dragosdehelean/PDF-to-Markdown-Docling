@@ -13,7 +13,11 @@ import fitz
 from docling_core.types.doc import TableItem
 from docling_core.types.doc.base import BoundingBox, CoordOrigin
 
-from audit_utils import needs_spacing_fix, needs_table_spacing_fix, is_spaced_text
+from pdf_to_markdown_docling.audit_utils import (
+    is_spaced_text,
+    needs_spacing_fix,
+    needs_table_spacing_fix,
+)
 
 
 TEXT_FLAGS = fitz.TEXT_PRESERVE_LIGATURES | fitz.TEXT_PRESERVE_WHITESPACE

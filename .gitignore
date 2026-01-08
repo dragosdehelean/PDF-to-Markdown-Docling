@@ -13,6 +13,13 @@ dist/
 htmlcov/
 .ipynb_checkpoints/
 
+# Local artifacts and generated outputs
+artifacts/
+tmp_*.md
+*_debug.txt
+*_report.txt
+*_assets/
+
 .DS_Store
 Thumbs.db
 .env

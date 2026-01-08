@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from audit_utils import (
+from pdf_to_markdown_docling.audit_utils import (
     _is_toc_like_table,
     is_multi_space_text,
     is_spaced_text,

@@ -12,7 +12,7 @@ from docling_core.types.doc.base import BoundingBox, CoordOrigin
 from docling_core.types.doc.page import TextCellUnit
 from docling_parse.pdf_parser import DoclingPdfParser, PdfDocument
 
-from audit_utils import needs_spacing_fix
+from pdf_to_markdown_docling.audit_utils import needs_spacing_fix
 
 
 @dataclass(frozen=True)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from whitespace_fix import normalize_text_whitespace
+from pdf_to_markdown_docling.whitespace_fix import normalize_text_whitespace
 
 
 class WhitespaceFixTests(unittest.TestCase):

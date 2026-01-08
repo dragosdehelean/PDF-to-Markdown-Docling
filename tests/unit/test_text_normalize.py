@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from text_normalize import normalize_ligatures, normalize_mojibake_text
+from pdf_to_markdown_docling.text_normalize import normalize_ligatures, normalize_mojibake_text
 
 
 class TextNormalizeTests(unittest.TestCase):

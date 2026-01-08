@@ -6,7 +6,7 @@ import unittest
 
 from docling_core.types.doc.document import TableCell, TableData, TableItem
 
-from table_fixes import (
+from pdf_to_markdown_docling.table_fixes import (
     collapse_table_header_groups,
     normalize_table_header_text,
     normalize_table_currency_columns,
