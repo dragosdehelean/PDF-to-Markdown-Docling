@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from audit_utils import needs_table_spacing_fix
-from conversion_utils import convert_pdf_to_markdown
+from pdf_to_markdown_docling.audit_utils import needs_table_spacing_fix
+from pdf_to_markdown_docling.conversion_utils import convert_pdf_to_markdown
 from docling_core.types.doc.base import ImageRefMode
 
 

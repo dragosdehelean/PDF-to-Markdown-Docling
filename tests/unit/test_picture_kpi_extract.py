@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from picture_kpi_extract import _is_axis_like, _is_kpi_text, _normalize_kpi_caption
+from pdf_to_markdown_docling.picture_kpi_extract import _is_axis_like, _is_kpi_text, _normalize_kpi_caption
 
 
 class PictureKpiExtractTests(unittest.TestCase):

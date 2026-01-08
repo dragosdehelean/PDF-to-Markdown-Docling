@@ -16,7 +16,7 @@ from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.labels import DocItemLabel
 from docling_core.types.doc import PictureItem
 
-from text_normalize import normalize_ligatures, normalize_mojibake_text
+from pdf_to_markdown_docling.text_normalize import normalize_ligatures, normalize_mojibake_text
 
 
 _TEXT_FLAGS = fitz.TEXT_PRESERVE_LIGATURES | fitz.TEXT_PRESERVE_WHITESPACE

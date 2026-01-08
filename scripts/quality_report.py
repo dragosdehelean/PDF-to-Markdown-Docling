@@ -5,9 +5,9 @@ import sys
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT_DIR))
+sys.path.insert(0, str(ROOT_DIR / "src"))
 
-from quality import format_report, score_markdown
+from pdf_to_markdown_docling.quality import format_report, score_markdown
 
 
 def build_parser() -> argparse.ArgumentParser:

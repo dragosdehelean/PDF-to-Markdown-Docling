@@ -17,6 +17,16 @@ Convert a PDF
 uv run python main.py "D:\\reports\\financial_report.pdf"
 ```
 
+Convert using .env (auto-loaded) — omit the positional arg if `FIN_REPORT_PDF` is set in `.env` or your shell:
+```powershell
+uv run python main.py
+```
+
+Preferred module form
+```powershell
+uv run python -m pdf_to_markdown_docling.cli --help
+```
+
 Convert + audit
 ```powershell
 uv run python main.py "D:\\reports\\financial_report.pdf" --audit
@@ -43,7 +53,8 @@ Options
 - `--export-json` to save Docling JSON (lossless)
 - `--quiet` to reduce Docling logs
 
-Environment overrides
+Environment overrides (auto-loaded from `.env` in repo root if present)
+- `FIN_REPORT_PDF=<path>` lets you omit the positional `input` argument.
 - `KPI_OCR=0` to disable KPI extraction from image regions (skips the OCR-heavy pass).
 
 Notes
@@ -56,12 +67,12 @@ Notes
 
 Quality check
 ```powershell
-uv run python tools\\quality_report.py "D:\\rag\\financial_report.md"
+uv run python scripts\\quality_report.py "D:\\rag\\financial_report.md"
 ```
 
 Audit PDF vs MD (standalone)
 ```powershell
-uv run python tools\\audit_pdf_vs_md.py "D:\\reports\\financial_report.pdf" "D:\\rag\\financial_report.md"
+uv run python scripts\\audit_pdf_vs_md.py "D:\\reports\\financial_report.pdf" "D:\\rag\\financial_report.md"
 ```
 
 Integration tests

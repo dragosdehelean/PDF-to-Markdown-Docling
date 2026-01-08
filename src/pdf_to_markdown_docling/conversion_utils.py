@@ -28,27 +28,27 @@ from docling_core.types.doc.document import ContentLayer, DEFAULT_EXPORT_LABELS
 from docling_core.types.doc.labels import DocItemLabel
 from docling_core.types.doc import TableItem
 
-from audit_utils import (
+from pdf_to_markdown_docling.audit_utils import (
     audit_doc_vs_markdown,
     is_spaced_text,
     needs_spacing_fix,
     needs_table_spacing_fix,
 )
-from date_cleanup import (
+from pdf_to_markdown_docling.date_cleanup import (
     remove_axis_text_inside_pictures,
     remove_date_only_text_inside_pictures,
 )
-from picture_kpi_extract import add_picture_kpi_captions
-from export_utils import (
+from pdf_to_markdown_docling.picture_kpi_extract import add_picture_kpi_captions
+from pdf_to_markdown_docling.export_utils import (
     add_visible_page_markers,
     reduce_markdown_noise,
     normalize_kpi_blocks,
     remove_axis_like_lines,
     remove_orphan_headings,
 )
-from pymupdf_spacing_fix import fix_spaced_items_with_pymupdf_glyphs
-from spacing_fix import fix_spaced_items_with_word_cells
-from table_fixes import (
+from pdf_to_markdown_docling.pymupdf_spacing_fix import fix_spaced_items_with_pymupdf_glyphs
+from pdf_to_markdown_docling.spacing_fix import fix_spaced_items_with_word_cells
+from pdf_to_markdown_docling.table_fixes import (
     collapse_document_table_groups,
     clean_document_table_cells,
     count_suspect_table_cells,
@@ -57,8 +57,8 @@ from table_fixes import (
     normalize_document_table_currencies,
     normalize_document_table_headers,
 )
-from whitespace_fix import normalize_document_text_whitespace
-from quality import QualityReport, format_report, score_markdown
+from pdf_to_markdown_docling.whitespace_fix import normalize_document_text_whitespace
+from pdf_to_markdown_docling.quality import QualityReport, format_report, score_markdown
 
 
 BACKEND_MAP = {
@@ -68,7 +68,8 @@ BACKEND_MAP = {
 
 PAGE_BREAK_PLACEHOLDER = "<!-- page break -->"
 SPACED_CELL_RATIO_THRESHOLD = 0.04
-ENV_FILE = Path(__file__).resolve().parent / ".env"
+ROOT_DIR = Path(__file__).resolve().parents[2]
+ENV_FILE = ROOT_DIR / ".env"
 ENV_KPI_OCR = "KPI_OCR"
 
 

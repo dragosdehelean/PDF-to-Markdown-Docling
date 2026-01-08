@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from pymupdf_spacing_fix import _needs_suffix_completion, _should_replace_text
+from pdf_to_markdown_docling.pymupdf_spacing_fix import _needs_suffix_completion, _should_replace_text
 
 
 class PyMuPdfSpacingFixTests(unittest.TestCase):

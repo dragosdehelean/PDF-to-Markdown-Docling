@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from export_utils import (
+from pdf_to_markdown_docling.export_utils import (
     add_visible_page_markers,
     reduce_markdown_noise,
     normalize_kpi_blocks,

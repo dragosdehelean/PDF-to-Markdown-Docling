@@ -6,7 +6,7 @@ import re
 
 from docling_core.types.doc import TableItem
 
-from text_normalize import normalize_ligatures, normalize_mojibake_text
+from pdf_to_markdown_docling.text_normalize import normalize_ligatures, normalize_mojibake_text
 
 _MULTI_SPACE_BETWEEN_TOKENS = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
 _TRAILING_RATIO_PATTERN = re.compile(r"\b([A-Z])\s+([A-Z])\b$")

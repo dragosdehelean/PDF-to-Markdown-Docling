@@ -8,7 +8,7 @@ from docling_core.types.doc.base import BoundingBox
 from docling_core.types.doc.document import DoclingDocument, ProvenanceItem
 from docling_core.types.doc.labels import DocItemLabel
 
-from date_cleanup import remove_date_only_text_inside_pictures, remove_axis_text_inside_pictures
+from pdf_to_markdown_docling.date_cleanup import remove_date_only_text_inside_pictures, remove_axis_text_inside_pictures
 
 
 def _prov(page_no: int, bbox: BoundingBox) -> ProvenanceItem:

@@ -5,17 +5,23 @@ It also includes **quality gates** (Markdown quality scoring + PDF↔MD fidelity
 
 ## 1) Core Commands (copy/paste)
 - Install deps: `uv sync`
-- Dev: `uv run python main.py --help`
+- Dev (shim): `uv run python main.py --help`
+- Dev (preferred): `uv run python -m pdf_to_markdown_docling.cli --help`
 - Typecheck: `uv run python -m compileall .`
 - Lint (fix): `N/A (not configured yet)`
-- Tests (all): `N/A (no test suite yet)`
-- E2E (all): `uv run python tools\audit_pdf_vs_md.py "<input.pdf>" "<output.md>"`
+- Tests (all): `uv run pytest -q`
+- E2E (audit gate): `uv run python scripts\audit_pdf_vs_md.py "<input.pdf>" "<output.md>"`
 - Build (if required): `N/A (CLI script)`
+- .env: auto-loaded; set `FIN_REPORT_PDF=<path>` to omit the positional `input` and `KPI_OCR=0/1` to toggle KPI OCR.
 
 ## 2) Repo Map (where things go)
-- Source: `main.py`, `conversion_utils.py`, `audit_utils.py`, `spacing_fix.py`, `pymupdf_spacing_fix.py`, `table_fixes.py`, `quality.py`, `export_utils.py`
-- Tests: `tests/` (create when adding a formal suite; currently not present)
-- Docs: `README.md`, this `AGENTS.md`, sample output `long_report.md`
+- Source package: `src/pdf_to_markdown_docling/` (cli.py, conversion_utils.py, audit_utils.py, spacing_fix.py, pymupdf_spacing_fix.py, table_fixes.py, quality.py, export_utils.py, date_cleanup.py, text_normalize.py, whitespace_fix.py, picture_kpi_extract.py)
+- CLI shim: `main.py` (adds `src/` to `sys.path` then delegates to `pdf_to_markdown_docling.cli`)
+- Scripts: `scripts/` (`audit_pdf_vs_md.py`, `quality_report.py`)
+- Examples: `examples/` (sample outputs like `long_report.md`, `long_report.docling.json`, `long_report.pdf`)
+- Artifacts: `artifacts/` (temporary/manual outputs, gitignored)
+- Tests: `tests/` (unit + integration present)
+- Docs: `README.md`, this `AGENTS.md`
 - Config: `pyproject.toml`, `.python-version`
 
 ## 3) Tech Stack
@@ -26,7 +32,7 @@ It also includes **quality gates** (Markdown quality scoring + PDF↔MD fidelity
 - **PDF text & glyph reconstruction:** PyMuPDF `>=1.26.7`
 - **GPU acceleration:** `torch==2.9.1+cu128`, `torchvision==0.24.1+cu128` (PyTorch cu128 index pinned in `pyproject.toml`)
 - **OCR (optional):** CLI supports `tesseract` (default) + `rapidocr` / `easyocr` options (external deps/tools required)
-- **Quality gates (local scripts):** `tools/quality_report.py`, `tools/audit_pdf_vs_md.py`
+- **Quality gates (local scripts):** `scripts/quality_report.py`, `scripts/audit_pdf_vs_md.py`
 
 ## 3) Strict Boundaries (must follow)
 
@@ -90,7 +96,7 @@ Also keep **inline documentation** up to date:
 - Prefer Docling configuration/controls **before** adding post-processing heuristics
 - Log via `logging`; ensure `--quiet` meaningfully reduces noise
 - Keep outputs stable and RAG-friendly (page breaks, clean headings, minimal noise)
-- Add small, focused utilities under `tools/` rather than bloating the main flow
+- Add small, focused utilities under `scripts/` rather than bloating the main flow
 
 ### Don't
 - DO NOT add heavyweight post-processing without first exhausting Docling options
@@ -109,7 +115,7 @@ If you're not sure how to proceed:
 Read these **before** working in the relevant area:
 - `README.md` — usage, CLI flags, and expected behavior
 - `pyproject.toml` — pinned runtime deps (Docling / PyMuPDF / PyTorch cu128)
-- `tools/quality_report.py` and `tools/audit_pdf_vs_md.py` — quality gate semantics
+- `scripts/quality_report.py` and `scripts/audit_pdf_vs_md.py` — quality gate semantics
 
 > If a supplementary doc conflicts with this file, **this AGENTS.md takes precedence**.
 

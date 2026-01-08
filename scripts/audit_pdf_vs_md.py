@@ -7,10 +7,10 @@ import sys
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT_DIR))
+sys.path.insert(0, str(ROOT_DIR / "src"))
 
-from audit_utils import audit_doc_vs_markdown, format_audit
-from conversion_utils import convert_pdf_to_doc
+from pdf_to_markdown_docling.audit_utils import audit_doc_vs_markdown, format_audit
+from pdf_to_markdown_docling.conversion_utils import convert_pdf_to_doc
 from docling_core.types.doc.base import ImageRefMode
 
 
@@ -131,7 +131,7 @@ def main() -> None:
     print(format_audit(metrics))
 
     if args.per_page:
-        from audit_utils import audit_doc_vs_markdown_per_page
+        from pdf_to_markdown_docling.audit_utils import audit_doc_vs_markdown_per_page
 
         page_audits = audit_doc_vs_markdown_per_page(result.document, markdown)
         page_audits.sort(key=lambda p: p.token_coverage)
