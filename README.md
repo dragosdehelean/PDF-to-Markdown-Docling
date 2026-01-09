@@ -2,6 +2,11 @@ PDF to Markdown (Docling)
 
 Simple CLI that converts a financial report PDF into Markdown ready for RAG ingestion.
 
+Docs
+- [docs/PIPELINE_OVERVIEW.md](docs/PIPELINE_OVERVIEW.md) — end-to-end stages, entrypoints, and engine paths.
+- [docs/FEATURE_MATRIX.md](docs/FEATURE_MATRIX.md) — option defaults, effects, and interactions.
+- [docs/DIAGRAMS.md](docs/DIAGRAMS.md) — Mermaid flow/sequence/component diagrams.
+
 Requirements
 - Python 3.12+
 - `uv`
